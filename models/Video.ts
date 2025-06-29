@@ -10,7 +10,7 @@ export interface IVideo {
     title: string;
     description: string;
     videoUrl: string;
-    thubmnailUrl: string;
+    // thumbnailUrl: string;
     controls?: boolean;
     transformation?: {
         height: number;
@@ -35,10 +35,10 @@ const videoSchema = new Schema<IVideo>({
         type: String,
         required: true,
     },
-    thubmnailUrl: {
-        type: String,
-        required: true,
-    },
+    // thumbnailUrl: {
+    //     type: String,
+    //     required: true,
+    // },
     controls: {
         type: Boolean,
         default: true,

@@ -26,6 +26,7 @@ class ApiClient{
         });
 
         if(!response.ok){
+            console.log(response);
             throw new Error(await response.text());
         } 
 

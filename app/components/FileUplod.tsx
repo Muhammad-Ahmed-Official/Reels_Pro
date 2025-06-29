@@ -12,6 +12,7 @@ interface FileUploadProps {
 
 const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) => {
     const [uploading, setUploading] = useState(false);
+    const [progress, setProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
 
     const validateFile = (file: File) => {
@@ -35,7 +36,7 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
                 return false;
             };
         }
-        return false;
+        return true;
     }
 
     const handleFileChange = async(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,25 +46,27 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
         setError(null);
 
         try {
-            const authRes = await fetch("/api/auth/upload-auth");
+            const authRes = await fetch("/api/upload-auth");
             const auth = await authRes.json();
 
             const response = await upload({
                 file,
                 fileName: file.name,
-                publicKey: process.env.NextNEXT_PUBLIC_PUBLIC_KEY!,
-                signature: auth.signature,
-                expire: auth.expire,
-                token: auth.token,
+                publicKey: process.env.NEXT_PUBLIC_PUBLIC_KEY!,
+                signature: auth?.authenticationParams.signature,
+                expire: auth?.authenticationParams.expire,
+                token: auth?.authenticationParams.token,
                 onProgress: (event) => {
                     if(event.lengthComputable && onProgress){
-                        const percent = (event.loaded / event.total) * 100;
-                        onProgress(Math.round(percent));
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        setProgress(percent); 
+                        if (onProgress) onProgress(percent);
                     }
                 },
             })
             onSuccess(response);
         } catch (error) {
+            setError("Upload failed. Please try again.");
             console.log("Upload failed");
         } finally{
             setUploading(false);
@@ -71,22 +74,22 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
     }
 
     return (
-        <>
-        <div className="space-y-8">
-            <input type="file" accept={fileType === "video" ? "video/*" : "image/*"} onChange={handleFileChange} />
-            { 
-                uploading && ( <div className="flex items-center gap-2 text-sm"> <Loader2 className="animate-spin w-4 h-4" /> <span>Uploading....</span> </div> ) 
-            }
-            {
-                error && ( <div className="text-red-500 text-sm">{error}</div> )
-            }
+            <>
+            <div className="space-y-8">
+                <input className="file-input file-input-accent" type="file" accept={fileType === "video" ? "video/*" : "image/*"} onChange={handleFileChange} />
+                {uploading && (
+                    <>
+                        <div className="flex gap-2 items-center font-bold text-[14px] m-0">
+                        Uploading <Loader2 size={20} className="animate-spin text-black" />
+                        </div>
+                        <progress className="progress progress-accent w-full" value={progress} max={100} />
+                    </>
+                )}
 
-            {/* <button type="button" onClick={handleUpload}>
-                Upload file
-            </button>
-            <br />
-            Upload progress: <progress value={progress} max={100}></progress> */}
-        </div>
+                {
+                    error && ( <div className="text-red-500 text-sm">{error}</div> )
+                }
+            </div>
         </>
     );
 };
