@@ -1,9 +1,9 @@
 import { User } from "@/models/User";
 import { IVideo } from "@/models/Video";
 
-export type VideoFormData = Omit<IVideo, "_id">;
+export type VideoFormData = Omit<IVideo, "_id" | "user">;
 
-export type UserFromData = Omit<User, "_id" | "createdAt" | "updatedAt">;
+export type UserFromData = Pick<User, "userName" | "email" | "password">;
 
 type FetchOptions = {
     method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -33,7 +33,6 @@ class ApiClient{
         return response.json()
     }
 
-
     
     async register(userData: UserFromData){
         return this.fetch("auth/register", {
@@ -45,7 +44,8 @@ class ApiClient{
 
 
     async getVideos() {
-        return this.fetch<IVideo[]>("videos");
+        const res = await this.fetch<{data: IVideo[]}>("videos");
+        return res.data;
     };
 
 

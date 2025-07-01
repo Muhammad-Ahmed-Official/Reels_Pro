@@ -1,21 +1,26 @@
 import { authOptions } from "@/lib/auth";
 import { connectionToDatabase } from "@/lib/db";
+import { Comment } from "@/models/Comment";
+import { Like } from "@/models/Like";
 import { IVideo, Video } from "@/models/Video";
 import { asyncHandler } from "@/utils/AsyncHandler";
 import { nextError, nextResponse } from "@/utils/Responses";
 import { getServerSession } from "next-auth";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 
-export const GET = asyncHandler(async () => {
+export const GET = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
     await connectionToDatabase();
     
     const videos = await Video.find({}).sort({createdAt: -1}).lean();
-    if(!videos || videos.length === 0) return nextError(400, "Empty field", []);
+    if(!videos || videos.length === 0) return nextError(200, "No videos uploaded yet.", []);
     
     return nextResponse(201, "Videos get successfully", videos); 
 })
 
-export const POST = asyncHandler(async (request: NextRequest) => {
+
+
+export const POST = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
     const session = await getServerSession(authOptions);
     if(!session){
         return nextError(401, "Unauthorized")
@@ -27,7 +32,6 @@ export const POST = asyncHandler(async (request: NextRequest) => {
     if (!body.title || !body.description || !body.videoUrl ) {
         return nextError(400, "Missing required field");
     };
-    // || !body.thumbnailUrl
     
     const videoData = { 
         ...body, 
@@ -36,36 +40,32 @@ export const POST = asyncHandler(async (request: NextRequest) => {
             height: 1920, 
             width: 1080,
             quality: body?.transformation?.quality ?? 100, 
-        }}
+        },
+        user: new mongoose.Types.ObjectId(session.user._id),
+    }
     const newVideo = await Video.create(videoData);
+    console.log(newVideo);
     return nextResponse(201, newVideo);
-    
 })
 
 
 
+export const DELETE = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
+    await connectionToDatabase();
 
-// export async function GET() {
-//     try {
-//     } catch (error) {
-//         // return nextError(400, "Failed to fetch videos");
-//         // return NextResponse.json([], { status: 200})
-//         // console.log(error)
-//         // return NextResponse.json(videos);
-//         // return NextResponse.json({error: "Failed to fetch videos"}, {status: 500})
-//     }
-// }
+    const { videoId } = await request.json();
+    if(!videoId) return nextError(404, "Video ID is required");
 
+    const video = await Video.findById(videoId);
+    if(!video) return nextError(404, "Video not found");
 
+    const [videoResult, commentResult, likeResult] = await Promise.all([
+        Comment.deleteMany({ video: video._id}),
+        Like.deleteMany({ video: video._id}),
+        Video.deleteOne({_id: videoId})
+    ])
 
+    if(!videoResult || !commentResult || !likeResult) return nextError(404, "Error in deleting Video");
 
-// export async function POST(request: NextRequest) {
-//     try {
-//             // return NextResponse.json({error: "Unauthorized"}, {status: 401})   
-//             // return NextResponse.json({error: "Missing required field"}, {status: 400})
-//         // return NextResponse.json(newVideo, {status: 201});
-//     } catch (error) {
-
-//         return NextResponse.json({error: "Failed to create video"}, {status: 500})
-//     }
-// }
+    return nextResponse(200,"Video Delete Succesfully!");
+})

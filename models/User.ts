@@ -1,13 +1,20 @@
+// npm i --save-dev @types/bcryptjs
+
 import mongoose, { model, models, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
-// npm i --save-dev @types/bcryptjs
 export interface User {
     userName: string;
     email: string;
     password: string;
+    verifyCode: string;
+    verifyCodeExpiry: Date;
+    isVerified: Boolean;
     _id?: mongoose.Types.ObjectId;
     createdAt?: Date;
     updatedAt?: Date;
+    followers: [mongoose.Types.ObjectId];
+    following: [mongoose.Types.ObjectId];
+    profilePic?: string;
 }
 
 const userSchema = new Schema<User>({
@@ -32,6 +39,33 @@ const userSchema = new Schema<User>({
         required: [true, "Password is reqired"],
         unique: true,
     },
+    verifyCode: {
+        type: String,
+        required: [true, "Verify code is reqired"],
+    },
+    verifyCodeExpiry: {
+        type: Date,
+        required: [true, "Verify code Expiry is reqired"],
+    },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    followers: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+        }
+    ], 
+    following: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+        }
+    ],
+    profilePic: {
+        type: String,
+    }
     
 },{ timestamps: true} );
 

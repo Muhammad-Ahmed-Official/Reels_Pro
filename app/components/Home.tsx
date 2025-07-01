@@ -19,8 +19,8 @@ export default function Home() {
   useEffect(() => {
     const fetchVideo = async() => {
       try {
-        const data = await apiClient.getVideos();
-        setVideo(data);
+        const response = await apiClient.getVideos();
+        setVideo(response);
       } catch (error) {
         console.error(error)
       }
@@ -29,14 +29,16 @@ export default function Home() {
     fetchVideo();
   }, [])
 
-  console.log(video)
+  // console.log(video)
 
   return (
     <div className='flex flex-wrap gap-6 justify-center p-4'>
         {
+          video?.length > 0 ?
           video?.map((reel) => (
           <ReelCard key={reel?._id?.toString()} reel={reel} />
-          )) 
+          )) : 
+          ( <div className='font-semibold text-xl'>No videos uploaded yet.</div> )
         }
     </div>
   )

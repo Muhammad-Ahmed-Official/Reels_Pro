@@ -3,38 +3,64 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signUpSchema } from '@/schemas/signUpSchema';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 import { ApiResponse } from "@/types/ApiResponse";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { Loader, Loader2 } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
+import { useDebounceCallback } from "usehooks-ts";
 
 export default function Register() {
     const [isSubmitting, setIsSubmitting] = useState(false);
-
+    const[userName, setUsername] = useState('');
+    const[userNameMessage, setUserNameMessage] = useState('');
+    const[isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const debounced = useDebounceCallback(setUsername, 300);
     const router = useRouter();
 
     const form = useForm<z.infer<typeof signUpSchema>>({
         resolver: zodResolver(signUpSchema),
         defaultValues: {
-            userName: "",
-            email: "",
-            password: "",
+            userName: '',
+            email: '',
+            password: '',
         }
     });
+
+
+    useEffect(() => {
+        const checkUserNameUnique = async () => {
+        if (userName) {
+            setIsCheckingUsername(true);
+            setUserNameMessage('');
+            try {
+                const response = await axios.get(`/api/check-uni-uName?userName=${userName}`);
+                    setUserNameMessage(response.data.message);
+                    console.log(response)
+                } catch (error) {
+                const axiosError = error as AxiosError<ApiResponse>;
+                    setUserNameMessage(axiosError.response?.data?.message ?? "Error checking userName");
+                } finally {
+                    setIsCheckingUsername(false);
+                }
+            }
+        }
+
+        checkUserNameUnique();
+    }, [userName])
 
 
     const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
         setIsSubmitting(true);
         try {
             await apiClient.register(data);
-            toast.success('Registered successfully!');
+            toast.success('Otp send to email');
             form.reset();
-            router.push('/login');
+            router.push(`/verify/${userName}`);
         } catch (error) {
             const axiosError = error as AxiosError<ApiResponse>;
             let errorMsg = axiosError.response?.data.message;
@@ -51,25 +77,31 @@ export default function Register() {
           <h1 className="text-2xl font-bold">Welcome Back to Reels Pro</h1>
           <p className="mb-4">Register to continue watching Reels</p>
         </div>
-        <div className="flex gap-x-5 justify-center items-baseline-last mb-0">
+        {/* <div className="flex gap-x-5 justify-center items-baseline-last mb-0">
             <div className="rounded shadow-xl px-4 py-[6.5px] bg-white cursor-pointer">
                 <img src="https://img.icons8.com/?size=25&id=17949&format=png&color=000000" alt="" />
             </div>
             <div className="rounded shadow-xl px-4 py-1 bg-white cursor-pointer">
                 <img src="https://img.icons8.com/?size=30&id=4Z2nCrz5iPY2&format=png&color=000000" alt="" />
             </div>
-        </div>
-        <div className="flex items-center gap-4 text-gray-500 my-3">
+        </div> */}
+        {/* <div className="flex items-center gap-4 text-gray-500 my-3">
             <hr className="flex-grow border-t border-gray-300" />
             <span className="text-sm">or</span>
             <hr className="flex-grow border-t border-gray-300" />
-        </div>
+        </div> */}
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <fieldset className="fieldset mx-auto">
 
                 <label className="label">Username</label>
-                <input type="text" className="input outline-none" placeholder="Username" {...form.register("userName")} />
+                <input type="text" className="input outline-none" placeholder="Username" {...form.register("userName", {
+                    onChange: (e) => {
+                        debounced(e.target.value)
+                    }
+                })} />
+                { isCheckingUsername && <Loader2 className="animate-spin" /> }
+                <p className={`text-sm ${userNameMessage === 'userName is available' ? 'text-green-500' : 'text-red-500'}`}>{userNameMessage}</p>
                 {form.formState.errors.userName && ( <p className="text-red-500 text-sm">{form.formState.errors.userName.message}</p>)}
 
                 <label className="label">Email</label>

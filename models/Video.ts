@@ -19,6 +19,7 @@ export interface IVideo {
     };
     createdAt?: Date;
     updatedAt?: Date;
+    user: mongoose.Types.ObjectId;
 }
 
 
@@ -58,6 +59,10 @@ const videoSchema = new Schema<IVideo>({
             max: 100,
         },
     },
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: "User"
+    }
 }, { timestamps: true })
 
 

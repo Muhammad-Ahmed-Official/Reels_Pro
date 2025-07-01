@@ -11,12 +11,12 @@ export default withAuth(
                 const {pathname} = req.nextUrl;
 
                 // allow auth related routes
-                if( pathname.startsWith("/api/auth") || pathname === "/login" || pathname === "/register" ){
+                if( pathname.startsWith("/api/auth") || pathname === "/login" || pathname === "/register" || pathname.startsWith("/api/verify-code")){
                     return true;
                 }
 
                 //public
-                if(pathname === "/" || pathname.startsWith("/api/videos")){
+                if(pathname === "/" || pathname.startsWith("/api/videos") || pathname.startsWith("/api/check-uni-uName")){
                     return true
                 }
 
