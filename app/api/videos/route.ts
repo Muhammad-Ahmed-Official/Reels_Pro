@@ -8,11 +8,15 @@ import { nextError, nextResponse } from "@/utils/Responses";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
+import { getToken } from "next-auth/jwt";
 
 export const GET = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
     await connectionToDatabase();
-    
-    const videos = await Video.find({}).sort({createdAt: -1}).lean();
+
+    const token = await getToken({ req: request });
+    if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
+    console.log(token);
+    const videos = await Video.find({user: token._id}).sort({createdAt: -1}).lean();
     if(!videos || videos.length === 0) return nextError(200, "No videos uploaded yet.", []);
     
     return nextResponse(201, "Videos get successfully", videos); 

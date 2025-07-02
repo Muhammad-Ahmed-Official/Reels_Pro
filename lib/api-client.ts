@@ -1,9 +1,12 @@
+import { Like } from "@/models/Like";
 import { User } from "@/models/User";
 import { IVideo } from "@/models/Video";
 
 export type VideoFormData = Omit<IVideo, "_id" | "user">;
 
 export type UserFromData = Pick<User, "userName" | "email" | "password">;
+
+export type LikeFormData = Omit<Like, "like">
 
 type FetchOptions = {
     method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -26,7 +29,7 @@ class ApiClient{
         });
 
         if(!response.ok){
-            console.log(response);
+            // console.log(response);
             throw new Error(await response.text());
         } 
 
@@ -38,6 +41,30 @@ class ApiClient{
         return this.fetch("auth/register", {
             method: "POST",
             body: userData,
+        })
+    }
+
+
+    async getUser(){
+        const response = await this.fetch<{data: User}>("profile/updateInfo");
+        return response.data;
+    }
+
+
+
+    async updateProfile(userName: string, email: string){
+        return this.fetch("profile/updateInfo",{
+            method: "POST",
+            body: { userName, email },
+        })
+    }
+
+
+
+    async updatePass(oldPassword: string, newPassword: string){
+        return this.fetch("profile/updatePass", {
+            method: "PUT",
+            body: {oldPassword, newPassword},
         })
     }
 
@@ -55,6 +82,24 @@ class ApiClient{
             method: "POST",
             body: videoData
         });
+    };
+
+
+
+    async likeUnlikeVideo(id: string){
+        return this.fetch("like-video", {
+            method: "POST",
+            body: { videoId: id }
+        })
+    };
+
+
+
+    async createComment(id: string, comment: string){
+        return this.fetch("comment-video", {
+            method: "POST",
+            body: {videoId: id, comment},
+        })
     };
     
 }
