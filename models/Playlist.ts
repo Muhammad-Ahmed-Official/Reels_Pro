@@ -1,17 +1,25 @@
 import mongoose, { model, models, Schema } from "mongoose";
 
 export interface Playlist {
-    playlist: string;
-    video: mongoose.Schema.Types.ObjectId;
+    _id?: string;
+    playlistName: string;
+    videos: mongoose.Schema.Types.ObjectId[];
+    user: mongoose.Schema.Types.ObjectId;
 }
 
 const playlistSchema = new Schema<Playlist>({
-    playlist: {
+    playlistName: {
         type: String,
+        unique: true,
     },
-    video: {
+    videos: [{
         type: Schema.Types.ObjectId,
         ref: "Video",
+        index: true,
+    }],
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
         index: true,
     }
 })

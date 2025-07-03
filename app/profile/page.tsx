@@ -1,8 +1,10 @@
 'use client'
 
 import { apiClient } from "@/lib/api-client";
-import { ListVideo, Loader2, TvMinimalPlay, User, X } from "lucide-react";
-import { useActionState, useEffect, useState } from "react";
+import { Playlist } from "@/models/Playlist";
+import { IVideo } from "@/models/Video";
+import { ListVideo, Loader2, Plus, Trash, TvMinimalPlay, User, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 
@@ -16,6 +18,8 @@ interface PasswordFormData {
     oldPassword: string;
     newPassword: string;
 }
+
+
 
 
 export default function page() {
@@ -52,8 +56,9 @@ export default function page() {
     getData();
     
   }, []);
-  
-  
+
+
+
   const onSubmit = async(data: Profile) => {
     try {
         await apiClient.updateProfile(data.userName, data.email);
@@ -84,8 +89,72 @@ export default function page() {
     }
   }
 
-  let videos;
+
+  const [playlistModal, setPlaylistModal] = useState(false);
+  const [playlistName, setPlaylistName] = useState('');
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+
+  const handlePlaylist = async() => {
+    try {
+      const response = await apiClient.createPlaylist(playlistName);
+      setPlaylists(prev => [...prev, response?.data])
+      toast.success("Playlist created successfully");
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error?.message : "Something went wrong";
+      toast.error(errorMsg);
+    } finally {
+      setPlaylistModal(false);
+      setPlaylistName('');
+    }
+  }
+
+
+  useEffect(() => {
+    const getPlaylist = async () => {
+      const response = await apiClient.getPlaylist();
+      setPlaylists([response.data]);
+    }
+    try {
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error?.message : "Something went wrong";
+      toast.error(errorMsg);
+    }
+
+    getPlaylist();
+
+  }, [])
+
+  const handleDeletePlaylist = async(playlistName: string) => {
+    try {
+      await apiClient.deletePlaylist(playlistName);
+      setPlaylists(prev => prev.filter(p => p.playlistName !== playlistName));
+      toast.success("Playlist deleted successfully");
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error?.message : "Something went wrong";
+      toast.error(errorMsg);
+    }
+  }
+
+
+  // videos
+
+  const [videos, setVideos] = useState<IVideo[]>([]);
+    useEffect(() => {
+      const fetchVideo = async() => {
+        try {
+          const response = await apiClient.getVideos();
+          setVideos(response);
+        } catch (error) {
+          const errorMsg = error instanceof Error ? error?.message : "Something went wrong";
+          toast.error(errorMsg);
+        }
+      }
   
+      fetchVideo();
+  }, [])
+
+
+
   return (
     <>
     <div className="w-full max-w-5xl mx-auto mt-5">
@@ -212,33 +281,88 @@ export default function page() {
             <div className="my-6 bg-white shadow-sm border border-gray-200 rounded-lg p-4 sm:p-6">
     <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">🎥 Your Uploaded Videos</h2>
 
-    {"videos".length === 0 ? (
+    {videos.length === 0 ? (
       <div className="text-center text-gray-500 text-sm">You haven't uploaded any videos yet.</div>
     ) : (
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {/* {"videos"?.map((video) => ( */}
+        {videos?.map((video) => (
           <div  className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="aspect-video bg-gray-100 overflow-hidden">
               <video
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                src='https://ik.imagekit.io/vmknmb1na/Popcorn_pmDlOEP8x.mp4'
+                src={video?.videoUrl}
                 controls
               />
             </div>
             <div className="p-4">
-              <h3 className="text-base font-semibold text-gray-800 truncate">goof</h3>
-              <p className="text-sm text-gray-500 mt-1 truncate">look great</p>
+              <h3 className="text-base font-semibold text-gray-800 truncate">{video?.title}</h3>
+              <p className="text-sm text-gray-500 mt-1 truncate">{video?.description}</p>
               <div className="flex justify-between items-center mt-3">
-                <span className="text-xs text-gray-400">12-2390</span>
+                <span className="text-xs text-gray-400">{new Date(video.createdAt!).toLocaleDateString()} </span>
                 <span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">Published</span>
               </div>
             </div>
           </div>
-        {/* ))} */}
-      </div>
-    )}
-  </div>
-        ) : activeTab === "playlist" ? ('') : null
+           ))} 
+            </div>
+          )}
+        </div>
+        ) : activeTab === "playlist" ? (
+              <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 my-2 animate-fadeIn">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-semibold mb-4 text-gray-800">🎶 Your Playlists</h2>
+                  <button className="cursor-pointer" onClick={() => setPlaylistModal(!playlistModal)}> <Plus /> </button>
+                </div>
+
+              {/* Playlist Grid */}
+              {playlists.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {playlists.map((playlist) => (
+                    <div key={playlist?._id}
+                      className="border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-all bg-gray-50">
+                        <div className="flex justify-between">
+                          <h3 className="text-md font-semibold text-gray-800 truncate">{playlist.playlistName}</h3>
+                          <button
+                            onClick={() => handleDeletePlaylist(playlist.playlistName)}
+                            className="text-sm text-red-500 hover:text-red-600 cursor-pointer">
+                            <Trash size={17} />
+                          </button>
+                        </div>
+                      <p className="text-xs text-gray-500 mt-1">{playlist.videos?.length} videos</p>
+                      <div className="flex justify-between items-center mt-4">
+                        
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : ( 
+               <p className="text-gray-500 text-sm mt-4">You have no playlists yet.</p>
+               )} 
+              
+              { playlistModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-[#1d1c1c96] bg-opacity-50 z-50 p-4">
+                <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold">Create Playlist</h3>
+                    <button onClick={() => setPlaylistModal(false)} className="text-gray-500 hover:text-gray-700 cursor-pointer bg-gray-200 p-2 rounded-full text-sm transition-colors"> <X size={16} /> </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Playlist Name</label>
+                    <input
+                      type="text" onChange={(e) => setPlaylistName(e.target.value)} placeholder="Enter playlist name..." className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:outline-none text-sm" />
+                  </div>
+                  <button
+                    type="submit"
+                    onClick={handlePlaylist} 
+                    className="bg-teal-500 cursor-pointer hover:bg-teal-600 my-2 transition-colors text-white px-4 py-2 rounded-md text-sm shadow-sm" > Create Playlist
+                  </button>
+                  </div>
+                </div>
+              ) }
+            </div>
+        ) : null
     }
     </div>
     </>

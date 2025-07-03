@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react'
 import ReelCard from './ReelCard';
 import { apiClient } from '@/lib/api-client';
 import { IVideo } from '@/models/Video';
+import toast from 'react-hot-toast';
 
 export default function Home() {
     // useEffect(() => {
@@ -22,7 +23,8 @@ export default function Home() {
         const response = await apiClient.getVideos();
         setVideo(response);
       } catch (error) {
-        console.error(error)
+        const errorMsg = error instanceof Error ? error?.message : "Something went wrong";
+        toast.error(errorMsg);
       }
     }
 

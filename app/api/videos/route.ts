@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { getToken } from "next-auth/jwt";
+import { Playlist } from "@/models/Playlist";
 
 export const GET = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
     await connectionToDatabase();
@@ -63,13 +64,17 @@ export const DELETE = asyncHandler(async (request: NextRequest):Promise<NextResp
     const video = await Video.findById(videoId);
     if(!video) return nextError(404, "Video not found");
 
-    const [videoResult, commentResult, likeResult] = await Promise.all([
+    const [videoResult, commentResult, likeResult, playlistUpdateResult] = await Promise.all([
         Comment.deleteMany({ video: video._id}),
         Like.deleteMany({ video: video._id}),
-        Video.deleteOne({_id: videoId})
+        Video.deleteOne({_id: videoId}),
+        Playlist.updateMany(
+            { videos: { videoId }},
+            { $pull: { videos: { videoId } } }      
+        )
     ])
 
-    if(!videoResult || !commentResult || !likeResult) return nextError(404, "Error in deleting Video");
+    if(!videoResult || !commentResult || !likeResult || playlistUpdateResult) return nextError(404, "Error in deleting Video");
 
     return nextResponse(200,"Video Delete Succesfully!");
 })

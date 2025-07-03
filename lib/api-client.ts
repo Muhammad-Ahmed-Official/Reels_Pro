@@ -1,4 +1,5 @@
 import { Like } from "@/models/Like";
+import { Playlist } from "@/models/Playlist";
 import { User } from "@/models/User";
 import { IVideo } from "@/models/Video";
 
@@ -101,6 +102,33 @@ class ApiClient{
             body: {videoId: id, comment},
         })
     };
+
+
+
+    async createPlaylist(playlistName: string):Promise<{ data: Playlist }>{
+        return this.fetch("playlist", {
+            method: "POST",
+            body: { playlistName },
+        })
+    };
+
+
+
+    async getPlaylist():Promise<{ data: Playlist }>{
+        return this.fetch("playlist");
+        // return res.data;
+    }
+
+
+
+    async deletePlaylist(playlistName: string){
+        return this.fetch("playlist", {
+            method: "DELETE",
+            body: { playlistName },
+        })
+    };
+
+
     
 }
 
