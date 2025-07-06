@@ -105,6 +105,15 @@ class ApiClient{
 
 
 
+    async follow(followingId: string){
+        return this.fetch("follow", {
+            method: "POST",
+            body: { followingId }
+        })
+    };
+
+
+
     async createPlaylist(playlistName: string):Promise<{ data: Playlist }>{
         return this.fetch("playlist", {
             method: "POST",
@@ -114,9 +123,9 @@ class ApiClient{
 
 
 
-    async getPlaylist():Promise<{ data: Playlist }>{
-        return this.fetch("playlist");
-        // return res.data;
+    async getPlaylist(){
+        const res = await this.fetch<{data: Playlist[]}>("playlist");
+        return res.data;
     }
 
 
@@ -129,6 +138,19 @@ class ApiClient{
     };
 
 
+
+    async saveVideo(playlistId: string, videoId: string){
+        return this.fetch("save-video", {
+            method: "POST",
+            body: {playlistId, videoId},
+        })
+    }
+
+    async viewVideo(id: string){
+        return this.fetch(`view/${id}`, {
+          method: "POST",
+        })
+    }
     
 }
 

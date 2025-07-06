@@ -3,6 +3,7 @@ import mongoose, { model, models, Schema } from "mongoose";
 export interface Playlist {
     _id?: string;
     playlistName: string;
+    isChecked?: boolean;
     videos: mongoose.Schema.Types.ObjectId[];
     user: mongoose.Schema.Types.ObjectId;
 }

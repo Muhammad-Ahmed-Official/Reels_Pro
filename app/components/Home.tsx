@@ -1,12 +1,11 @@
 'use client'
 
-import { useSession } from 'next-auth/react';
-import { redirect } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import ReelCard from './ReelCard';
 import { apiClient } from '@/lib/api-client';
 import { IVideo } from '@/models/Video';
 import toast from 'react-hot-toast';
+
 
 export default function Home() {
     // useEffect(() => {
@@ -34,7 +33,7 @@ export default function Home() {
   // console.log(video)
 
   return (
-    <div className='flex flex-wrap gap-6 justify-center p-4'>
+    <div className='flex flex-wrap gap-6  px-4'>
         {
           video?.length > 0 ?
           video?.map((reel) => (

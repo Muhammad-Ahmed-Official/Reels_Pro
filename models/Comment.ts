@@ -2,8 +2,11 @@ import mongoose, { model, models, Schema } from "mongoose";
 
 export interface Comment {
     comment: string;
-    user: mongoose.Schema.Types.ObjectId;
-    video: mongoose.Schema.Types.ObjectId;
+    userName: string;
+    videoId: mongoose.Types.ObjectId;
+    parentCommentId: mongoose.Types.ObjectId;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 const commentSchema = new Schema<Comment>({
@@ -11,16 +14,21 @@ const commentSchema = new Schema<Comment>({
         type: String,
         required: [true, "Comment is required"],
     },
-    user: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
+    userName: {
+        type: String,
+        required: true,
         index: true,
     },
-    video: {
+    videoId: {
         type: Schema.Types.ObjectId,
         ref: "Video",
         index: true,
+    },
+    parentCommentId: {
+        type: Schema.Types.ObjectId,
+        ref: "Comment",
+        default: null,
     }
-})
+}, { timestamps: true})
 
 export const Comment = models?.Comment || model<Comment>("Comment", commentSchema);

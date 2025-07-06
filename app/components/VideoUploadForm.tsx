@@ -25,7 +25,6 @@ export default function VideoUploadForm() {
         title: "",
         description: "",
         videoUrl: "",
-        // thumbnailUrl: "",
       }
     })
 
@@ -71,8 +70,8 @@ export default function VideoUploadForm() {
                 />
                 {form.formState.errors.videoUrl && ( <p className="text-red-500 text-sm">{form.formState.errors.videoUrl.message}</p>)}
                 
-                <button className="btn btn-neutral mt-4 w-xs" type="submit" disabled={isSubmitting} >
-                    {isSubmitting ? ( <Loader2 size={25} className="mr-2 animate-spin text-white" />)  : ('Publish Video') }
+                <button className="btn mt-4 w-xs" type="submit" disabled={isSubmitting} >
+                    {isSubmitting ? ( <Loader2 size={25} className="mr-2 animate-spin" />)  : ('Publish Video') }
                 </button>
             </fieldset>
         </form>

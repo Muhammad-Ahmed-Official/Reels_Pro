@@ -113,14 +113,14 @@ export default function Register() {
                 {form.formState.errors.password && ( <p className="text-red-500 text-sm">{form.formState.errors.password.message}</p>)}
 
                 <button className="btn btn-neutral mt-4 w-xs" type="submit"  disabled={isSubmitting}> 
-                    {isSubmitting ? ( <Loader2 size={25} className="mr-2 animate-spin text-white" />)  : ('Register') }
+                    {isSubmitting ? ( <Loader2 size={25} className="mr-2 animate-spin" />)  : ('Register') }
                 </button>
             </fieldset>
         </form>
        <div className="text-center my-0">
           <p>
             Already have an account?{' '}
-            <Link href="/login" className="text-blue-600  hover:text-blue-800">
+            <Link href="/login" className="">
               Login
             </Link>
           </p>

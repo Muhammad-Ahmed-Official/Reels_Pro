@@ -3,8 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Provider from "./components/Provider";
 import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import { Toaster } from "react-hot-toast";
+import { ThemeProvider } from "./context/themeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,19 +28,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html data-theme="cupcake" lang="en">
-  <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
-    <Provider>
-      <Navbar />
-      <main className="flex-grow">
-        {children}
-      </main>
-      <Footer />
-      <Toaster position="top-right" />
-    </Provider>
-  </body>
-</html>
+  return (  
+  <html lang="en">
+    <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
+      <ThemeProvider>
+        <Provider>
+          <main className="relative">
+            <Navbar />
+            <div className="flex">
+              <Sidebar />
+                <section className='flex h-screen flex-1 flex-col p-4'>
+                  <div className='w-full'>
+                      { children }
+                  </div>
+                </section> 
+            </div> 
+          </main>
+          {/* <Footer /> */}
+          <Toaster position="top-right" />
+        </Provider>
+      </ThemeProvider>
+    </body>
+  </html>
 
   );
 }

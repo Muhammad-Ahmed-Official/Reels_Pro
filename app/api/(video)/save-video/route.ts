@@ -12,13 +12,20 @@ export const POST = asyncHandler(async (request:NextRequest):Promise<NextRespons
     const token = await getToken({ req: request });
     if(!token || !token._id) return nextError(401, "Unauthorized: Token not found");
 
-    const { playlistName, videoId } = await request.json();
-    if(!playlistName || !videoId) return nextError(400, "Missing fields");
+    const { playlistId, videoId } = await request.json();
+    if(!playlistId || !videoId) return nextError(400, "Missing fields");
 
-    const findPlaylist = await Playlist.findOne({playlistName, user: token._id});
+    const findPlaylist = await Playlist.findById(playlistId);
     if(!findPlaylist) return nextError(404, "Playlist not found");
-    
-    await Playlist.updateOne({ _id: findPlaylist._id }, { $addToSet: { videos: videoId } });
+    const isCheckedVideoIsPresent = findPlaylist.videos.includes(videoId);
+    const updatedPlaylist = isCheckedVideoIsPresent ? 
+    {
+        $pull: { videos: videoId }
+    } :
+    {
 
-    return nextResponse(200, "Video saved successfully");
+        $push: { videos: videoId }
+    }
+    const updated = await Playlist.findByIdAndUpdate(playlistId, updatedPlaylist, { new: true })
+    return nextResponse(200, isCheckedVideoIsPresent ? "Video Unsaved Successfully!" : "Video Save Successfully!", updated);
 })

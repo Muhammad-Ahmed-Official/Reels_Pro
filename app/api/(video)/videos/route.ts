@@ -16,9 +16,21 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
 
     const token = await getToken({ req: request });
     if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
-    console.log(token);
-    const videos = await Video.find({user: token._id}).sort({createdAt: -1}).lean();
+
+    const videos = await Video.aggregate([
+        { $match: { user: new mongoose.Types.ObjectId(token._id)}},
+        { $sort: {createdAt: -1}},
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "video",
+                as: "likes",
+            }
+        },
+    ])
     if(!videos || videos.length === 0) return nextError(200, "No videos uploaded yet.", []);
+
     
     return nextResponse(201, "Videos get successfully", videos); 
 })
@@ -49,7 +61,7 @@ export const POST = asyncHandler(async (request: NextRequest):Promise<NextRespon
         user: new mongoose.Types.ObjectId(session.user._id),
     }
     const newVideo = await Video.create(videoData);
-    console.log(newVideo);
+    // console.log(newVideo);
     return nextResponse(201, newVideo);
 })
 

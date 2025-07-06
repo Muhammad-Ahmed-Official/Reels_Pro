@@ -10,7 +10,6 @@ export interface IVideo {
     title: string;
     description: string;
     videoUrl: string;
-    // thumbnailUrl: string;
     controls?: boolean;
     transformation?: {
         height: number;
@@ -20,6 +19,7 @@ export interface IVideo {
     createdAt?: Date;
     updatedAt?: Date;
     user: mongoose.Types.ObjectId;
+    views: number;
 }
 
 
@@ -36,10 +36,10 @@ const videoSchema = new Schema<IVideo>({
         type: String,
         required: true,
     },
-    // thumbnailUrl: {
-    //     type: String,
-    //     required: true,
-    // },
+    views: {
+        type: Number,
+        default: 0
+    },
     controls: {
         type: Boolean,
         default: true,
@@ -62,7 +62,7 @@ const videoSchema = new Schema<IVideo>({
     user: {
         type: Schema.Types.ObjectId,
         ref: "User"
-    }
+    },
 }, { timestamps: true })
 
 
