@@ -16,6 +16,8 @@ export const POST =  asyncHandler(async (request: NextRequest) => {
     const isCodeNodeExpired = new Date(user.verifyCodeExpiry) > new Date();
     if(isCodeValid && isCodeNodeExpired) {
         user.isVerified = true;
+        user.verifyCode = undefined;
+        user.verifyCodeExpiry = undefined;
         await user.save();
         return nextResponse(201, "You register successfully");
     } else if (!isCodeNodeExpired){

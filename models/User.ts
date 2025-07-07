@@ -12,8 +12,8 @@ export interface User {
     _id?: mongoose.Types.ObjectId;
     createdAt?: Date;
     updatedAt?: Date;
-    followers: [mongoose.Types.ObjectId];
-    following: [mongoose.Types.ObjectId];
+    // followers: [mongoose.Types.ObjectId];
+    // following: [mongoose.Types.ObjectId];
     profilePic?: string;
 }
 
@@ -51,18 +51,18 @@ const userSchema = new Schema<User>({
         type: Boolean,
         default: false,
     },
-    followers: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: "User",
-        }
-    ], 
-    following: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: "User",
-        }
-    ],
+    // followers: [
+    //     {
+    //         type: Schema.Types.ObjectId,
+    //         ref: "User",
+    //     }
+    // ], 
+    // following: [
+    //     {
+    //         type: Schema.Types.ObjectId,
+    //         ref: "User",
+    //     }
+    // ],
     profilePic: {
         type: String,
     }
