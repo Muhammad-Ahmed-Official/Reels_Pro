@@ -11,7 +11,7 @@ export default withAuth(
                 const {pathname} = req.nextUrl;
 
                 // allow auth related routes
-                if( pathname.startsWith("/api/auth") || pathname === "/login" || pathname === "/register" || pathname.startsWith("/api/verify-code")){
+                if( pathname.startsWith("/api/auth") || pathname === "/login" || pathname === "/register" || pathname === "/forgot" || pathname === "/profile" || pathname.startsWith("/verify")){
                     return true;
                 }
 

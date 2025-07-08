@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Provider from "./components/Provider";
-import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
-import Footer from "./components/Footer";
+import Provider from "../components/Provider";
+import Navbar from "./co/Navbar";
+import Sidebar from "./co/Sidebar";
+import Footer from "./co/Footer";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./context/themeContext";
 
@@ -30,24 +30,24 @@ export default function RootLayout({
 }>) {
   return (  
   <html lang="en">
-    <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
-      <ThemeProvider>
-        <Provider>
-          <main className="relative">
-            <Navbar />
+    <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}  suppressHydrationWarning >
+      {/* <ThemeProvider> */}
+          {/* <main className="relative">
+            <Navbar />  min-h-screen flex flex-col
             <div className="flex">
-              <Sidebar />
-                <section className='flex h-screen flex-1 flex-col p-4'>
-                  <div className='w-full'>
-                      { children }
-                  </div>
-                </section> 
+            <Sidebar />
+            <section className='flex h-screen flex-1 flex-col p-4'>
+            <div className='w-full'>
+            </div>
+            </section> 
             </div> 
-          </main>
+            </main> */}
           {/* <Footer /> */}
+        <Provider>
+            { children }
           <Toaster position="top-right" />
         </Provider>
-      </ThemeProvider>
+      {/* </ThemeProvider> */}
     </body>
   </html>
 

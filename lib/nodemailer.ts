@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { Verification_Email_Template } from "@/email/EmailTemplate";
+import { SEND_EMAIL_LINK, Verification_Email_Template } from "@/email/EmailTemplate";
 
 const emailConfig = {
     service: "gmail",
@@ -33,4 +33,24 @@ async function sendEmailOTP(mail:string, otp: string) {
 }
 
 
-export { sendEmailOTP }
+
+async function sendEmailLink(mail:string, link:string) { 
+    console.log(link);
+    const transporter = nodemailer.createTransport(emailConfig);
+    const mailOptions = {
+        from: process.env.PORTAL_EMAIL,
+        to: mail, 
+        subject: "RESET PASSWORD",
+        html: SEND_EMAIL_LINK(link), // html body 
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return `OTP sent to ${mail} via email`;
+    } catch (error) {
+        throw `Error sending OTP to ${mail} via email: ${error}`;
+    }
+}
+
+
+export { sendEmailOTP, sendEmailLink }

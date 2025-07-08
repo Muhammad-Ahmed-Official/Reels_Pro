@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { apiClient } from "@/lib/api-client";
-import FileUpload from "./FileUplod";
+import FileUpload from "../../components/FileUplod";
 import toast from "react-hot-toast";
 import { ApiResponse } from "@/types/ApiResponse";
 import { AxiosError } from "axios";

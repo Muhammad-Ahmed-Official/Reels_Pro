@@ -1,6 +1,6 @@
 "use client";
 
-import VideoUploadForm from "../../components/VideoUploadForm";
+import VideoUploadForm from "../../co/VideoUploadForm";
 
 export default function VideoUploadPage() {
   return (

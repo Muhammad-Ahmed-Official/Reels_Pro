@@ -8,13 +8,14 @@ export interface User {
     password: string;
     verifyCode: string;
     verifyCodeExpiry: Date;
-    isVerified: Boolean;
+    isVerified: boolean;
     _id?: mongoose.Types.ObjectId;
     createdAt?: Date;
     updatedAt?: Date;
     // followers: [mongoose.Types.ObjectId];
     // following: [mongoose.Types.ObjectId];
     profilePic?: string;
+    TFA: boolean;
 }
 
 const userSchema = new Schema<User>({
@@ -51,6 +52,13 @@ const userSchema = new Schema<User>({
         type: Boolean,
         default: false,
     },
+    TFA: {
+        type: Boolean,
+        default: false,
+    },
+    profilePic: {
+        type: String,
+    }
     // followers: [
     //     {
     //         type: Schema.Types.ObjectId,
@@ -63,9 +71,6 @@ const userSchema = new Schema<User>({
     //         ref: "User",
     //     }
     // ],
-    profilePic: {
-        type: String,
-    }
     
 },{ timestamps: true} );
 
