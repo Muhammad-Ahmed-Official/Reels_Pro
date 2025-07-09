@@ -1,5 +1,4 @@
 // 'use client'
-
 // import { zodResolver } from "@hookform/resolvers/zod"
 // import { useRouter } from 'next/navigation';
 // import React, { useState } from 'react'
@@ -87,48 +86,55 @@
 // }
 
 
+
 "use client"
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react'
 import toast from 'react-hot-toast';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { signInSchema } from '@/schemas/signInSchema';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { asyncHandlerFront } from '@/utils/FrontAsyncHandler';
 
 const LoginPage = () => {
-   const [showPassword, setShowPassword] = useState(false);
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false);
+  const router = useRouter()
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsLoading(true);
-        const res = await signIn("credentials", {
-            email, password,
-            redirect: false,
-        });
-
-        if (res?.error) {
-            toast.error(res.error);
-            setIsLoading(false);
-            return;
-        }
-        console.log("res =>", res);
-
-        setIsLoading(false);
-        toast.success("Login successful", {
-            // onClose: () => router.push("/")
-        });
+  const {register, reset, handleSubmit, formState:{ isSubmitting, errors } } = useForm<z.infer<typeof signInSchema>>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      identifier: "",
+      password: "",
     }
+  });
+
+  const onSubmit = async (data: z.infer<typeof signInSchema>) => {
+    await asyncHandlerFront(
+      async() => {
+        const result = await signIn('credentials', {
+        redirect: false,
+        identifier: data.identifier,
+        password: data.password
+      })
+      reset();
+      if(result?.error) return toast.error(result.error);
+      if(result?.url) router.push('/');
+      },
+      (error: any) => {
+        toast.error("Failed to login", error)
+      }
+    )
+  }
 
     return (
       <div className="min-h-screen flex">
       {/* Left side - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col items-center justify-center px-6 lg:px-16 xl:px-24">
         <div className="w-full max-w-sm">
-          {/* Logo */}
           <div className="flex items-center gap-2 mb-8">
             {/* <CircleDot className="w-8 h-8 text-[#16C47F]" /> */}
             <span className="text-xl font-semibold">
@@ -139,26 +145,20 @@ const LoginPage = () => {
 
           <h1 className="text-2xl font-semibold text-primary-400 mb-8">Log in</h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <input
-                type="email"
-                // value={Email}
-                // onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
+              <input type="email" placeholder="Email" {...register("identifier")}
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
-                required
               />
+              {errors.identifier && ( <p className="text-red-500 text-sm">{errors.identifier.message}</p>)}
             </div>
 
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                // value={Password}
-                // onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder="Password" {...register("password")}
                 className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
-                required
+                {...errors.password && ( <p className="text-red-500 text-sm">{errors.password.message}</p>)}
               />
               <button
                 type="button"
@@ -178,12 +178,11 @@ const LoginPage = () => {
                 type="submit"
                 className="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg cursor-pointer transition"
               >
-                {/* {signinMutation?.isPending ? (
-                  <BiLoaderCircle className="size-7 animate-spin" />
+                {isSubmitting ? (
+                  <Loader2 className="size-7 animate-spin" />
                 ) : (
                   "Login"
-                )} */}
-                Login
+                )}
               </button>
               <p className="text-sm">
                 <Link href="/forgot">Forgot password?</Link>
@@ -194,7 +193,7 @@ const LoginPage = () => {
           <p className="mt-8 text-center text-sm text-gray-600">
             Don't have an account?{" "}
             <span className="text-primary-500 hover:text-primary-600 font-medium">
-              <Link href="/signup">Sign up</Link>
+              <Link href="/register">Sign up</Link>
             </span>
           </p>
         </div>

@@ -76,13 +76,13 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
     return (
             <>
             <div className="space-y-8">
-                <input className="file-input file-input-accent" type="file" accept={fileType === "video" ? "video/*" : "image/*"} onChange={handleFileChange} />
+                <input className="cursor-pointer mb-2 inline-block size-15 rounded-full ring-2 ring-white bg-white" type="file" accept={fileType === "video" ? "video/*" : "image/*"} onChange={handleFileChange} />
                 {uploading && (
                     <>
                         <div className="flex gap-2 items-center font-bold text-[14px] m-0">
                         Uploading <Loader2 size={20} className="animate-spin text-black" />
                         </div>
-                        <progress className="progress progress-accent w-full" value={progress} max={100} />
+                        {onProgress && <progress className="progress progress-accent w-full" value={progress} max={100} />}
                     </>
                 )}
 

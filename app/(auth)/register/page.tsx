@@ -137,266 +137,147 @@
 "use client"
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { asyncHandlerFront } from '@/utils/FrontAsyncHandler';
 import toast from 'react-hot-toast';
 import { apiClient } from '@/lib/api-client';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { signUpSchema } from '@/schemas/signUpSchema';
+import { zodResolver } from '@hookform/resolvers/zod';
+import Image from 'next/image';
+import { useDebounceCallback } from 'usehooks-ts';
+import axios, { AxiosError } from 'axios';
+import { ApiResponse } from '@/utils/ApiResponse';
+import FileUpload from '@/components/FileUplod';
 
 const RegisterPage = () => {
+
     const [showPassword, setShowPassword] = useState(false);
-    const [formData, setFormData] = useState({
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: ""
-    });
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+    const[userName, setUsername] = useState('');
+    const[userNameMessage, setUserNameMessage] = useState('');
+    const[isCheckingUsername, setIsCheckingUsername] = useState(false);
+    const debounced = useDebounceCallback(setUsername, 300);
 
-        if (errors[name]) {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[name];
-                return newErrors;
-            });
-        }
-    }
-
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsLoading(true);
-
-        await asyncHandlerFront(
-            async () => {
-                const res = await apiClient.register({ email: formData.email, password: formData.password, userName: formData.username });
-
-                // toast.success(res.message);
-                // router.push(`/verify-otp/${res.data.id}`);
-            }, (error:any) => {
-                toast.error(error.message);
+    useEffect(() => {
+        const checkUserNameUnique = async () => {
+        if (userName) {
+            setIsCheckingUsername(true);
+            setUserNameMessage('');
+            try {
+                const response = await axios.get(`/api/check-uni-uName?userName=${userName}`);
+                    setUserNameMessage(response.data.message);
+                } catch (error) {
+                const axiosError = error as AxiosError<ApiResponse>;
+                    setUserNameMessage(axiosError.response?.data?.message ?? "Error checking userName");
+                } finally {
+                    setIsCheckingUsername(false);
+                }
             }
-        );
+        }
 
-        setIsLoading(false);
+        checkUserNameUnique();
+    }, [userName])
+
+
+    const { handleSubmit, reset, register, formState:{isSubmitting, errors}, setValue, watch } = useForm<z.infer<typeof signUpSchema>>({
+        resolver: zodResolver(signUpSchema),
+        defaultValues: {
+            userName: "",
+            email: "",
+            password: "",
+            profilePic: "",
+        }
+    })
+    
+
+    const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
+        await asyncHandlerFront(
+            async() => {
+                await apiClient.register(data);
+                toast.success('Otp send to email');
+                router.push(`/verify/${userName}`);
+                reset()
+            }, 
+            (error) => {
+                toast.error(error.message)
+            }
+        )
     };
 
+
     return (
-        // <div>
-        //     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
-        //         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        //             <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-        //                 Create an account
-        //             </h2>
-        //         </div>
-
-        //         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        //             <form onSubmit={handleSubmit} className="space-y-6">
-        //                 <div>
-        //                     <label htmlFor="username" className='block text-sm/6 font-medium text-gray-900'>
-        //                         Username
-        //                     </label>
-        //                     <div className="mt-2">
-        //                         <input
-        //                             type="text"
-        //                             name="username"
-        //                             required
-        //                             className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 sm:text-sm/6 ${errors.username ? 'border-red-500' : ''
-        //                                 }`}
-        //                             value={formData.username}
-        //                             onChange={handleChange}
-        //                         />
-        //                         {errors.username && (
-        //                             <p className="mt-1 text-sm text-red-600">{errors.username}</p>
-        //                         )}
-        //                     </div>
-        //                 </div>
-
-        //                 <div>
-        //                     <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
-        //                         Email address
-        //                     </label>
-        //                     <div className="mt-2">
-        //                         <input
-        //                             id="email"
-        //                             name="email"
-        //                             type="email"
-        //                             required
-        //                             autoComplete="email"
-        //                             className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 sm:text-sm/6 ${errors.email ? 'border-red-500' : ''
-        //                                 }`}
-        //                             value={formData.email}
-        //                             onChange={handleChange}
-        //                         />
-        //                         {errors.email && (
-        //                             <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-        //                         )}
-        //                     </div>
-        //                 </div>
-
-        //                 <div>
-        //                     <div className="flex items-center justify-between">
-        //                         <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
-        //                             Password
-        //                         </label>
-        //                     </div>
-        //                     <div className="mt-2">
-        //                         <input
-        //                             id="password"
-        //                             name="password"
-        //                             type="password"
-        //                             required
-        //                             className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 sm:text-sm/6 ${errors.password ? 'border-red-500' : ''
-        //                                 }`}
-        //                             value={formData.password}
-        //                             onChange={handleChange}
-        //                         />
-        //                         {errors.password && (
-        //                             <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-        //                         )}
-        //                     </div>
-        //                 </div>
-
-        //                 <div>
-        //                     <div className="flex items-center justify-between">
-        //                         <label htmlFor="confirmPassword" className="block text-sm/6 font-medium text-gray-900">
-        //                             Confirm Password
-        //                         </label>
-        //                     </div>
-        //                     <div className="mt-2">
-        //                         <input
-        //                             id="confirmPassword"
-        //                             name="confirmPassword"
-        //                             type="password"
-        //                             required
-        //                             className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-primary-600 sm:text-sm/6 ${errors.confirmPassword ? 'border-red-500' : ''
-        //                                 }`}
-        //                             value={formData.confirmPassword}
-        //                             onChange={handleChange}
-        //                         />
-        //                         {errors.confirmPassword && (
-        //                             <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
-        //                         )}
-        //                     </div>
-        //                 </div>
-
-        //                 <div>
-        //                     <button
-        //                         type="submit"
-        //                         disabled={isLoading || !formData.username || !formData.email || !formData.password || !formData.confirmPassword}
-        //                         className={`flex w-full justify-center rounded-md bg-primary-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-primary-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-70 disabled:cursor-not-allowed ${isLoading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}`}
-        //                     >
-        //                         {isLoading ? (
-        //                             <span className="flex items-center">
-        //                                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        //                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        //                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        //                                 </svg>
-        //                                 Processing...
-        //                             </span>
-        //                         ) : 'Register'}
-        //                     </button>
-        //                 </div>
-        //             </form>
-
-        //             <p className="mt-10 text-center text-sm/6 text-gray-500">
-        //                 Already have an account?{' '}
-        //                 <Link href="/login" className="font-semibold text-primary-600 hover:text-primary-500">
-        //                     Login
-        //                 </Link>
-        //             </p>
-        //         </div>
-        //     </div>
-        // </div>
         <div className='min-h-screen flex'>
             <div className="w-full lg:w-1/2 flex flex-col items-center justify-center px-6 lg:px-16 xl:px-24">
                 <div className="w-full max-w-sm">
-                {/* Logo */}
-                <div className="flex items-center gap-2 mb-8">
-                    {/* <CircleDot className="w-8 h-8 text-[#16C47F]" /> */}
-                    <span className="text-xl font-semibold">
-                    <span className="text-primary-400">Reels</span>_
-                    <span className="text-primary-400">Pro</span>
-                    </span>
-                </div>
-
-                <h1 className="text-2xl font-semibold text-primary-400 mb-8">Register</h1>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <input
-                            type="email"
-                            // value={Email}
-                            // onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Username"
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
-                            required
+                    <div className="flex items-center gap-2 mb-8">
+                        <span className="text-xl font-semibold">
+                        <span className="text-primary-400">Reels</span>_
+                        <span className="text-primary-400">Pro</span>
+                        </span>
+                    </div>
+                    <h1 className="text-2xl font-semibold text-primary-400 mb-8">Register</h1>
+                    
+                    <FileUpload fileType='image' onSuccess={(res) => setValue("profilePic", res.url)} />
+                    { watch("profilePic") &&
+                    (
+                        <img
+                            src={watch("profilePic")}
+                            alt="Preview"
+                            className="cursor-pointer mb-2 inline-block size-15 rounded-full ring-2 ring-white"
                         />
-                    </div>
-                    <div>
-                        <input
-                            type="email"
-                            // value={Email}
-                            // onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Email"
+                    ) }
+
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                        <div>
+                            <input type="text" placeholder="Username" 
                             className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
-                            required
+                                {...register("userName", {
+                                    onChange: (e) => { debounced(e.target.value) }
+                                })}
+                            />
+                            { isCheckingUsername && <Loader2 className="animate-spin mt-1" /> }
+                            <p className={`text-sm mt-1 ${userNameMessage === 'userName is available' ? 'text-green-500' : 'text-red-500'}`}>{userNameMessage}</p>
+                            {errors.userName && ( <p className="mt-1 text-sm text-red-600">{errors.userName.message}</p>)}
+                        </div>
+                        <div>
+                            <input type="email" placeholder="Email" {...register("email")}
+                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
+                            />
+                            {errors.email && ( <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>)}
+                        </div>
+
+                        <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Password" {...register("password")}
+                            className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
+                            {...errors.password && ( <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>)}
                         />
-                    </div>
+                        <button type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                            { showPassword ? ( <EyeOff className="w-5 h-5 cursor-pointer" /> ) : 
+                            ( <Eye className="w-5 h-5 cursor-pointer" /> )}
+                        </button>
+                        </div>
 
-                    <div className="relative">
-                    <input
-                        type={showPassword ? "text" : "password"}
-                        // value={Password}
-                        // onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Password"
-                        className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
-                        required
-                    />
-                    <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                    >
-                        {showPassword ? (
-                        <EyeOff className="w-5 h-5 cursor-pointer" />
-                        ) : (
-                        <Eye className="w-5 h-5 cursor-pointer" />
-                        )}
-                    </button>
-                    </div>
+                        <div className="flex items-center justify-between">
+                        <button
+                            type="submit"
+                            className="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg cursor-pointer transition">
+                            { isSubmitting ? ( <Loader2 className="size-7 animate-spin" />) : ("Login") }
+                        </button>
+                        <p className="text-sm"> <Link href="/forgot">Forgot password?</Link> </p>
+                        </div>
+                    </form>
 
-                    <div className="flex items-center justify-between">
-                    <button
-                        type="submit"
-                        className="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg cursor-pointer transition"
-                    >
-                        {/* {signinMutation?.isPending ? (
-                        <BiLoaderCircle className="size-7 animate-spin" />
-                        ) : (
-                        "Login"
-                        )} */}
-                        Join now
-                    </button>
-                    <p className="text-sm">
-                        <Link href="/forgot">Forgot password?</Link>
+                    <p className="mt-8 text-center text-sm text-gray-600"> Already have an account?{' '}
+                    <span className="text-primary-500 hover:text-primary-600 font-medium"><Link href="/login"> Log in</Link> </span> 
                     </p>
-                    </div>
-                </form>
-
-               <p className="mt-8 text-center text-sm text-gray-600">
-                    Already have an account?{' '}
-                <span className="text-primary-500 hover:text-primary-600 font-medium"><Link href="/login"> Log in</Link>
-                </span> 
-                </p>
                 </div>
             </div>
 

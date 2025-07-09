@@ -31,6 +31,10 @@ export const POST =  asyncHandler(async (request: NextRequest) => {
         await User.create({ userName, email, password, verifyCode, verifyCodeExpiry: expiryDate, profilePic: profilePic || ""});
     }
 
+    // if(existingUserByEmail) await User.create({ userName, email, password, profilePic: profilePic || ""});
+    // return nextResponse(201, "User created successfully");
+
+
     const emailResponse = await sendEmailOTP(email, verifyCode);
     if (emailResponse.success) return nextResponse(200, `OTP sent to ${email}`);
     else return nextError(500, emailResponse.message);

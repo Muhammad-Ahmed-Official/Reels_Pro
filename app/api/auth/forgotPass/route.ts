@@ -20,7 +20,7 @@ export const POST = asyncHandler(async (request:NextRequest):Promise<NextRespons
 
     if(!user.isVerified) return nextError(200, "Plz verify your account first");
 
-    const resetLink = `${process.env.ALLOWED_ORIGIN_1}/change-password/${user.refreshToken}`;
+    const resetLink = `${process.env.ALLOWED_ORIGIN}/change-pass/${token?._id}`;
     sendEmailLink(email, resetLink)
         .then(() => console.log("Reset email sent successfully"))
         .catch((err:any) => console.error("Error sending reset email:", err));

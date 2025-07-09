@@ -31,9 +31,9 @@ export default function VideoUploadForm() {
     const onSubmit = async (data: z.infer<typeof videoSchema>) => {
       setIsSubmitting(true);
       try {
-        await apiClient.createVideo(data);
-        form.reset();
-        toast.success("Video Publish Successfully"); 
+        // await apiClient.createVideo(data);
+        // form.reset();
+        // toast.success("Video Publish Successfully"); 
         router.push('/');
       } catch (error) {
          const axiosError = error as AxiosError<ApiResponse>;
@@ -63,11 +63,15 @@ export default function VideoUploadForm() {
                 {form.formState.errors.description && ( <p className="text-red-500 text-sm">{form.formState.errors.description.message}</p>)}
 
                 <label className="label text-[16px] font-semibold">Upload Video</label>
+
                 <FileUpload
                   fileType="video"
                   onSuccess={(res) => form.setValue("videoUrl", res.url)}
                   onProgress={setUploadProgress}
                 />
+
+                
+
                 {form.formState.errors.videoUrl && ( <p className="text-red-500 text-sm">{form.formState.errors.videoUrl.message}</p>)}
                 
                 <button className="btn mt-4 w-xs" type="submit" disabled={isSubmitting} >

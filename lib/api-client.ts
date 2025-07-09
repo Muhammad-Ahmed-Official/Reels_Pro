@@ -46,6 +46,30 @@ class ApiClient{
     }
 
 
+    async verifyCd(userName: string, code: string){
+        return this.fetch("verify-code", {
+            method: "POST",
+            body: {userName, code}
+        })
+    }
+
+
+    async forgotPass(email: string){
+        return this.fetch("auth/forgotPass", {
+            method: "POST",
+            body: { email },
+        })
+    }
+
+
+    async resendOTP(email: string){
+        return this.fetch("auth/resentOTP", {
+            method: "POST",
+            body: { email },
+        })
+    }
+
+
     async getUser(){
         const response = await this.fetch<{data: User}>("profile/updateInfo");
         return response.data;

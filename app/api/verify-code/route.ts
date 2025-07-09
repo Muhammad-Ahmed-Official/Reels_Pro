@@ -15,10 +15,18 @@ export const POST =  asyncHandler(async (request: NextRequest) => {
     const isCodeValid = user.verifyCode === code;
     const isCodeNodeExpired = new Date(user.verifyCodeExpiry) > new Date();
     if(isCodeValid && isCodeNodeExpired) {
-        user.isVerified = true;
-        user.verifyCode = undefined;
-        user.verifyCodeExpiry = undefined;
-        await user.save();
+        // user.isVerified = true;
+        // user.verifyCode = undefined;
+        // console.log("OK")
+        // // user.verifyCodeExpiry = null;
+        // await user.save();
+        await User.updateOne(
+        { _id: user._id },
+        {
+            $set: { isVerified: true },
+            $unset: { verifyCode: "", verifyCodeExpiry: "" }
+        }
+        );
         return nextResponse(201, "You register successfully");
     } else if (!isCodeNodeExpired){
         return nextError(400, "Verification code has expired");
