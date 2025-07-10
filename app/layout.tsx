@@ -7,6 +7,7 @@ import Sidebar from "./co/Sidebar";
 import Footer from "./co/Footer";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./context/themeContext";
+import { ProfileProvider } from "./context/profileContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,22 +33,13 @@ export default function RootLayout({
   <html lang="en">
     <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}  suppressHydrationWarning >
       {/* <ThemeProvider> */}
-          {/* <main className="relative">
-            <Navbar />  min-h-screen flex flex-col
-            <div className="flex">
-            <Sidebar />
-            <section className='flex h-screen flex-1 flex-col p-4'>
-            <div className='w-full'>
-            </div>
-            </section> 
-            </div> 
-            </main> */}
-          {/* <Footer /> */}
-        <Provider>
-            { children }
-          <Toaster position="top-right" />
-        </Provider>
       {/* </ThemeProvider> */}
+        <ProfileProvider>
+          <Provider>
+              { children }
+            <Toaster position="top-right" />
+          </Provider>
+        </ProfileProvider>
     </body>
   </html>
 

@@ -7,10 +7,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 
 export const POST = asyncHandler(async (request:NextRequest):Promise<NextResponse> => {
-    await connectionToDatabase();
-    
     const token = await getToken({ req: request });
     if(!token) return nextError(200, "Unauthorized: Token not found");
+    
+    await connectionToDatabase();
 
     const followerId = token._id;
     const { followingId } = await request.json();

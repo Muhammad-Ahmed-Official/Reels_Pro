@@ -14,6 +14,7 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
     const [uploading, setUploading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [error, setError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const validateFile = (file: File) => {
         if (fileType === "video") {
@@ -73,24 +74,37 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
         }
     }
 
-    return (
-            <>
-            <div className="space-y-8">
-                <input className="cursor-pointer mb-2 inline-block size-15 rounded-full ring-2 ring-white bg-white" type="file" accept={fileType === "video" ? "video/*" : "image/*"} onChange={handleFileChange} />
-                {uploading && (
-                    <>
-                        <div className="flex gap-2 items-center font-bold text-[14px] m-0">
-                        Uploading <Loader2 size={20} className="animate-spin text-black" />
-                        </div>
-                        {onProgress && <progress className="progress progress-accent w-full" value={progress} max={100} />}
-                    </>
-                )}
+    const handleTriggerClick = () => {
+        fileInputRef.current?.click();
+    };
 
-                {
-                    error && ( <div className="text-red-500 text-sm">{error}</div> )
-                }
-            </div>
-        </>
+    return (
+        <div className="space-y-4">
+            <input
+                ref={fileInputRef}
+                className="hidden"
+                type="file"
+                accept={fileType === "video" ? "video/*" : "image/*"}
+                onChange={handleFileChange}
+            />
+
+            <button
+                type="button"
+                onClick={handleTriggerClick}
+                disabled={uploading}
+                className="cursor-pointer inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                {uploading ? (
+                <>
+                    <Loader2 className="animate-spin w-4 h-4 mr-2" />
+                    Uploading...
+                </>
+                ) : (
+                <>Select {fileType === "video" ? "Video" : "Image"}</>
+                )}
+            </button>
+            {uploading && onProgress && ( <progress className="progress w-full" value={progress} max={100} />)}
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+        </div>
     );
 };
 

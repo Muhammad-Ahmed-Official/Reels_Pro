@@ -14,7 +14,7 @@ export interface User {
     updatedAt?: Date;
     // followers: [mongoose.Types.ObjectId];
     // following: [mongoose.Types.ObjectId];
-    profilePic?: string;
+    profilePic: string;
     TFA: boolean;
 }
 

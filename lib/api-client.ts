@@ -1,11 +1,38 @@
+import { Comment } from "@/models/Comment";
 import { Like } from "@/models/Like";
 import { Playlist } from "@/models/Playlist";
 import { User } from "@/models/User";
 import { IVideo } from "@/models/Video";
 
-export type VideoFormData = Omit<IVideo, "_id" | "user">;
+export type VideosFormData = Omit<IVideo, "_id" | "user" | "views">;
 
 export type UserFromData = Pick<User, "userName" | "email" | "password">;
+
+export interface IUserInfo {
+  userName: string;
+  profilePic: string;
+  isVerified?:boolean;
+}
+
+export type VideoFormData = IVideo & {
+    _id: string;
+    owner: IUserInfo;
+    isLikedCurrentUser?: boolean;
+    commentWithUser: Comment[];
+    likesCount: number;
+    isFollow: boolean;
+}
+
+
+export interface IVideoDetail {
+  _id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  views: number;
+  createdAt?: string; 
+  owner: IUserInfo;
+}
 
 export type LikeFormData = Omit<Like, "like">
 
@@ -94,6 +121,11 @@ class ApiClient{
     }
 
 
+    async getVideo(id: string){
+        const res = await this.fetch<{data:VideoFormData[]}>(`getVideo?id=${id}`)
+        return res.data;
+    }
+
 
     async getVideos() {
         const res = await this.fetch<{data: IVideo[]}>("videos");
@@ -102,7 +134,7 @@ class ApiClient{
 
 
 
-    async createVideo(videoData: VideoFormData){
+    async createVideo(videoData: VideosFormData){
         return this.fetch("videos", {
             method: "POST",
             body: videoData
