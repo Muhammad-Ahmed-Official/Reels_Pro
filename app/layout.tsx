@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Provider from "../components/Provider";
-import Navbar from "./co/Navbar";
-import Sidebar from "./co/Sidebar";
-import Footer from "./co/Footer";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./context/themeContext";
 import { ProfileProvider } from "./context/profileContext";
@@ -32,14 +29,14 @@ export default function RootLayout({
   return (  
   <html lang="en">
     <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}  suppressHydrationWarning >
-      {/* <ThemeProvider> */}
-      {/* </ThemeProvider> */}
+      <ThemeProvider>
         <ProfileProvider>
           <Provider>
               { children }
             <Toaster position="top-right" />
           </Provider>
         </ProfileProvider>
+      </ThemeProvider>
     </body>
   </html>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { apiClient, type VideoFormData } from "@/lib/api-client"
-import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Play, VolumeX, Volume2 } from "lucide-react"
+import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Play, VolumeX, Volume2, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import CommentModal from "./CommentModal"
 import Image from "next/image"
@@ -24,18 +24,20 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const [isMuted, setIsMuted] = useState(true)
   const [isLiked, setIsLiked] = useState(reel.isLikedCurrentUser)
   const [isBookmarked, setIsBookmarked] = useState(false);
-//   const [likes, setLikes] = useState(reel.likes)
+  const [openSaveModal, setOpenSaveModal] = useState(false);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const [commentButtonPosition, setCommentButtonPosition] = useState<{ x: number; y: number } | undefined>()
   const [isFollowing, setIsFollowing] = useState(reel?.isFollow);
-
-  const { data: session } = useSession();
-//   console.log(session?.user?._id)
+  
+  
+  //   const [likes, setLikes] = useState(reel.likes)
+  // const { data: session } = useSession();
+  // console.log(session?.user?._id)
+  // console.log(reel) 
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const commentButtonRef = useRef<HTMLButtonElement>(null)
 
-//   console.log(reel) 
 
   useEffect(() => {
     if (isActive && videoRef.current) {
@@ -79,8 +81,17 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     )
    }
 
-   const toggleBookmark = () => {
+   const toggleBookmark = async() => {
     setIsBookmarked(!isBookmarked)
+    setOpenSaveModal(true);
+    await asyncHandlerFront(
+      async() => {
+        // await apiClient.getPlaylist();
+      }, 
+      (error) => {
+        toast.error(error.message)
+      }
+    )
    }
 
 
@@ -88,7 +99,8 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     setIsFollowing(!isFollowing);
     await asyncHandlerFront(
         async() => {
-            // await apiClient.follow(session?.user?._id as string)
+            await apiClient.follow(reel.owner._id as string);
+            toast.success(!isFollowing ? "Follow successfully" : "Unfollow successfully");
         }, 
         (error) => {
             toast.error(error.message)
@@ -214,6 +226,26 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                   />
                 </div>
               </button>
+
+              { openSaveModal && (
+                  <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50 p-4">
+                  <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Save videos in Playlists</h3>
+                      <button onClick={() => setOpenSaveModal(false)} className=" cursor-pointer p-2 rounded-full text-sm transition-colors"> <X size={16} /> </button>
+                    </div>
+
+                    <div className="space-y-1 flex flex-col gap-1 justify-center">
+                      {/* {playlists && playlists.map((pl) => (
+                        <label className="label" key={pl._id}>
+                          <input onChange={(e) =>  handleCheckboxChange(e.target.checked, pl._id!, reel?._id!.toString())} checked={pl.isChecked} type="checkbox" className="checkbox checkbox-sm checkbox-accent" /> {pl.playlistName} 
+                        </label>
+                      )) 
+                      } */}
+                    </div>
+                    </div>
+                  </div>
+                ) }
 
               {/* More */}
               <button className="flex flex-col items-center">

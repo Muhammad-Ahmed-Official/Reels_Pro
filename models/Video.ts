@@ -16,7 +16,7 @@ export interface IVideo {
         width: number;
         quality?: number; 
     };
-    createdAt?: Date;
+    createdAt: Date;
     updatedAt?: Date;
     user: mongoose.Types.ObjectId;
     views: number;

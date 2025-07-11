@@ -13,15 +13,21 @@ export const ThemeContext = createContext<ThemeContextType>({
 })
 
 export const ThemeProvider = ( {children}: { children: ReactNode} ) => {
-    const [themeMode, setThemeMode] = useState("cupcake");
-    useEffect(() => {
-        document.documentElement.setAttribute("data-theme", themeMode);
-        localStorage.setItem("app-theme", themeMode);
-    }, [themeMode])
-    useEffect(() => {
-        const storedTheme = localStorage.getItem("app-theme");
-        if (storedTheme) setThemeMode(storedTheme);
+    const [themeMode, setThemeMode] = useState("light");
+     useEffect(() => {
+        const storedTheme = localStorage.getItem("app-theme") || "light";
+        setThemeMode(storedTheme);
+        document.documentElement.setAttribute("data-theme", storedTheme);
     }, []);
+
+    useEffect(() => {
+        if (themeMode) {
+            document.documentElement.setAttribute("data-theme", themeMode);
+            localStorage.setItem("app-theme", themeMode);
+        }
+    }, [themeMode]);
+
+    if (!themeMode) return null;
 
     return (
         <ThemeContext.Provider value={{ themeMode, setThemeMode }}>

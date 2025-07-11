@@ -1,24 +1,27 @@
 import mongoose, { model, models, Schema } from "mongoose";
 
 export interface Like{
-    like: number;
-    user: mongoose.Types.ObjectId;
+    likes: number;
+    users: mongoose.Types.ObjectId[];
     video: mongoose.Types.ObjectId;
 }
 
 const likeSchema = new Schema<Like>({
-    like: {
+    likes: {
         type: Number,
     },
-    user: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        index: true,
-    },
+    users: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            index: true,
+        }
+    ],
     video: {
         type: Schema.Types.ObjectId,
         ref: "Video",
         index: true,
+        unique: true,
     }
 })
 

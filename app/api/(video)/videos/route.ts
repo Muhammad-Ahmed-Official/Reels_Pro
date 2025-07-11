@@ -107,6 +107,7 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
         $project: {
         videoUrl: 1,
         title: 1,
+        createdAt: 1,
         description: 1,
         views: 1,
         likes: 1,

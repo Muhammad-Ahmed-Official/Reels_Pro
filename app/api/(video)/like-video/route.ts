@@ -16,12 +16,28 @@ export const POST = asyncHandler(async (request: NextRequest):Promise<NextRespon
     const { videoId } = await request.json();
     if (!videoId) return nextError(400, "videoId are required");
 
-    const existingLike = await Like.findOne({ user: token._id, video: videoId });
+    const existingLike = await Like.findOne({ video: videoId });
     if(existingLike){
-        await Like.findByIdAndDelete(existingLike._id)
-        return nextResponse(200, 'Video unliked');
+        const hasUserLikes = existingLike.users.some((id : any) => id.equals(token._id));
+        if(hasUserLikes){
+            await Like.updateOne(
+                { video: videoId },
+                {
+                    $pull: { users: token._id },
+                    $inc: { likes: -1 },
+                }
+            )
+            return nextResponse(200, 'Video unliked');
+        } else {
+            await Like.updateOne(
+              { video: videoId },
+              {
+                $addToSet: { users: token._id },
+                $inc: { likes: 1 },
+              }  
+            )
+        } 
     }
-
-    await Like.create({user: new mongoose.Types.ObjectId(token._id), video: videoId, like: 1});
+    await Like.create({users: [new mongoose.Types.ObjectId(token._id)], video: videoId, like: 1});
     return nextResponse(201, "liked");
 })

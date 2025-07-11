@@ -30,6 +30,28 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
             },
             { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true} },
 
+            {
+                $lookup: {
+                    from: "follows",
+                    localField: "owner._id",
+                    foreignField: "following",
+                    as: "followerList",
+                }
+            },
+            {
+                $lookup: {
+                    from: "follows",
+                    localField: "owner._id",
+                    foreignField: "follower",
+                    as: "followingList",
+                }
+            },
+            {
+                $addFields: {
+                    followerCount: { $size: { $ifNull: ["$followerList", []]} },
+                    followingCount: { $size: { $ifNull: ["$followingList", []]} },
+                }
+            },
             // Lookup likes
             {
                 $lookup: {
@@ -43,10 +65,10 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
                 $addFields: {
                     likesCount: { $size: "$likedUsers" },
                     likedUserIds: {
-                        $map: {
+                        $reduce: {
                             input: "$likedUsers",
-                            as: "like",
-                            in: "$$like.user"
+                            initialValue: [],
+                            in: { $concatArrays: ["$$value", "$$this.users"] }
                         }
                     }
                 }
@@ -64,7 +86,7 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
                 $lookup: {
                     from: "comments", 
                     localField: "_id",
-                    foreignField: "video",
+                    foreignField: "videoId",
                     as: "comments"
                 }
             },
@@ -85,8 +107,8 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
                             $match: {
                                 $expr: {
                                     $and: [
-                                        { $eq: ["$isFollowing", "$$videoOwner"]},
-                                        { $eq: ["follower", new mongoose.Types.ObjectId(token._id)]}
+                                        { $eq: ["$follower", new mongoose.Types.ObjectId(token._id)]},
+                                        { $eq: ["$following", "$$videoOwner"]},
                                     ]
                                 }
                             }
@@ -107,31 +129,36 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
                 }
             },
             {
-                $addFields: {
-                    commentWithUser: {
-                        $map: {
-                            input: "$comments",
-                            as: "comment",
-                            in: {
-                                _id: "$$comment._id",
-                                text: "$$comment.text",
-                                createdAt: "$$comment.createdAt",
-                                user: {
-                                    $arrayElemAt: [
-                                        {
-                                            $filter: {
-                                                input: "$commentUsers",
-                                                as: "cu",
-                                                cond: { $eq: ["$$cu._id", "$$comment.user"]}
-                                            }
-                                        },
-                                        0
-                                    ]
+            $addFields: {
+                commentWithUser: {
+                $ifNull: [
+                    {
+                    $map: {
+                        input: "$comments",
+                        as: "comment",
+                        in: {
+                        _id: "$$comment._id",
+                        text: "$$comment.text",
+                        createdAt: "$$comment.createdAt",
+                        user: {
+                            $arrayElemAt: [
+                            {
+                                $filter: {
+                                input: "$commentUsers",
+                                as: "cu",
+                                cond: { $eq: ["$$cu._id", "$$comment.user"] }
                                 }
-                            }
+                            },
+                            0
+                            ]
+                        }
                         }
                     }
+                    },
+                    []
+                ]
                 }
+            }
             },
             {
                 $project: {
@@ -141,6 +168,7 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
                     views: 1,
                     createdAt: 1,
                     owner: {
+                        _id: 1,
                         userName: "$owner.userName",
                         profilePic: "$owner.profilePic",
                         isVerified: "$owner.isVerified",
@@ -151,6 +179,8 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
                         userName: 1,
                         profilePic: 1
                     },
+                    followerCount: 1,
+                    followingCount: 1,
                     commentWithUser: 1,
                     isFollow: 1,
                 }

@@ -9,6 +9,7 @@ export type VideosFormData = Omit<IVideo, "_id" | "user" | "views">;
 export type UserFromData = Pick<User, "userName" | "email" | "password">;
 
 export interface IUserInfo {
+    _id: string;
   userName: string;
   profilePic: string;
   isVerified?:boolean;

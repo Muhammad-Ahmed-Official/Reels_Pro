@@ -12,7 +12,7 @@ export default withAuth(
 
                 // allow auth related routes
                 if( pathname.startsWith("/api/auth") || pathname === "/login" || pathname === "/register" || pathname === "/forgot" || pathname.startsWith("/api/upload-auth") || pathname.startsWith("/change-pass") || 
-                pathname === "/verify" || pathname.startsWith("/api/verify")){
+                pathname.startsWith("/verify") || pathname.startsWith("/api/verify")){
                     return true;
                 }
 

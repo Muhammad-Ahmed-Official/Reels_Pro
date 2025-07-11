@@ -269,7 +269,7 @@ const RegisterPage = () => {
                         <button
                             type="submit"
                             className="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg cursor-pointer transition">
-                            { isSubmitting ? ( <Loader2 className="size-7 animate-spin" />) : ("Login") }
+                            { isSubmitting ? ( <Loader2 className="size-7 animate-spin" />) : ("Join now") }
                         </button>
                         <p className="text-sm"> <Link href="/forgot">Forgot password?</Link> </p>
                         </div>

@@ -1,16 +1,21 @@
 "use client"
 
-import { useState } from "react"
-import { Home, Video, Bell, MessageCircle, Plus, User, Menu, X } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Home, Video, Bell, MessageCircle, Plus, User, Menu, X, LogOut, ListVideo } from "lucide-react"
 import HomeTab from "@/components/HomeTab"
 import VideosTab from "@/components/VideoTab"
 import NotificationsTab from "@/components/NotificationsTab"
 import MessagesTab from "@/components/MessagesTab"
 import CreateTab from "@/components/CreateTab"
 import ProfileTab from "@/components/ProfileTab"
+import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
+import toast from "react-hot-toast"
+import { signOut, useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import PlaylistTab from "@/components/PlaylistTab"
 
 // Tab Components
-type TabType = "home" | "videos" | "notifications" | "messages" | "create" | "profile"
+type TabType = "home" | "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "playlist"
 
 export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("home");
@@ -23,7 +28,9 @@ export default function ProfilePage() {
         { id: "notifications" as TabType, label: "Notifications", icon: Bell },
         { id: "messages" as TabType, label: "Messages", icon: MessageCircle },
         { id: "create" as TabType, label: "Create", icon: Plus },
+        { id: "playlist" as TabType, label: "Playlist", icon: ListVideo },
         { id: "profile" as TabType, label: "Profile", icon: User },
+        { id: "logout" as TabType, label: "Logout", icon: LogOut },
     ]
 
     const renderTabContent = () => {
@@ -36,14 +43,24 @@ export default function ProfilePage() {
                 return <NotificationsTab />
             case "messages":
                 return <MessagesTab />
-            // case "create":
-            //     return <CreateTab />
             case "profile":
                 return <ProfileTab />
+            case "playlist":
+                return <PlaylistTab />
             default:
                 return <HomeTab />
         }
     }
+
+    const { data: session } = useSession();
+    // console.log(session?.user?._id)
+    const router = useRouter();
+
+    // useEffect(() => {
+    //     if(!session?.user?._id){
+    //         // router.push("/login")
+    //     }
+    // }, [])
 
     return (
         <div className="min-h-screen">
@@ -66,18 +83,19 @@ export default function ProfilePage() {
                             const IconComponent = tab.icon
                             return (
                                 <button
-                                    key={tab.id}
+                                key={tab.id}
                                     onClick={() => {
                                         if (tab.id === "create") {
                                             setIsCreateModalOpen(true)
+                                        } else if (tab.id === "logout"){
+                                            signOut({ callbackUrl: "/login" });
                                         } else {
                                             setActiveTab(tab.id)
                                             setSidebarOpen(false)
                                         }
                                     }}
                                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${activeTab === tab.id ? "bg-primary-500 text-white hover:bg-primary-600" : "hover:bg-primary-600 hover:text-white/95"
-                                        }`}
-                                >
+                                        }`}>
                                     <IconComponent className="w-5 h-5" />
                                     <span className="font-medium">{tab.label}</span>
                                 </button>

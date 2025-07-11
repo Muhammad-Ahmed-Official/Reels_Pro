@@ -1,4 +1,5 @@
 import useProfile from "@/app/context/profileContext"
+import useTheme from "@/app/context/themeContext"
 import { apiClient } from "@/lib/api-client"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import Image from "next/image"
@@ -12,11 +13,38 @@ interface ProfileData {
 }
 
 const ProfileTab = () => {
+
+    const [tempSetting, setTempSetting] = useState({
+        emailNotifications: true,
+        isPublic: true,
+        darkMode: false,
+        twoFactor: false,
+    })
+
+    const [savedSettings, setSavedSettings] = useState(tempSetting);
+    const toggleSetting = (key: keyof typeof tempSetting) => {
+    setTempSetting(prev => ({
+        ...prev,
+        [key]: !prev[key]
+    }));
+    };
+
     const { profileMode, setProfileMode } = useProfile();
-    const isPublic = profileMode === "public"
+    const { themeMode, setThemeMode } = useTheme();
+
+    const isPublic = profileMode === "public";
+    const isDark = themeMode === "dark";
 
     const [userInfo, setUserInfo] = useState<ProfileData>({} as ProfileData);
     const [location, setLocation] = useState('');
+
+    // const handleSave = () => {
+    //     setSavedSettings(tempSetting);
+    //     setProfileMode(savedSettings.isPublic ? "private" : "public");
+    //     setThemeMode(savedSettings.darkMode ? "light" : "dark");
+    //     toast.success("Updated changes successfully")
+    // }
+
 
     useEffect(() => {
         const getInfo = async () => {
@@ -106,13 +134,13 @@ const ProfileTab = () => {
                                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm sm:text-base"
                                 />
                             </div>
-                            <div>
+                            {/* <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bio</label>
                                 <textarea
                                     defaultValue="Content creator and developer passionate about technology and design. I love creating engaging content and building amazing user experiences."
                                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm sm:text-base h-20 sm:h-24 resize-none"
                                 />
-                            </div>
+                            </div> */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
                                 <input
@@ -148,10 +176,10 @@ const ProfileTab = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <span className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
-                                        {isPublic ? "Public Profile" : "Private Profile"}
+                                        {profileMode ? "Public Profile" : "Private Profile"}
                                     </span>
                                     <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                                        {isPublic ? "Your profile is visible to others." : "Your profile is hidden from public view."}
+                                        {profileMode ? "Your profile is visible to others." : "Your profile is hidden from public view."}
                                     </p>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
@@ -166,7 +194,7 @@ const ProfileTab = () => {
                                     <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Switch to dark theme</p>
                                 </div>
                                 <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" />
+                                    <input type="checkbox" className="sr-only peer" checked={themeMode === "dark"} onChange={() => setThemeMode(isDark ? "light" : "dark")}  />
                                     <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
                                 </label>
                             </div>
@@ -188,14 +216,14 @@ const ProfileTab = () => {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-3 mt-6 sm:mt-8">
-                            <button className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm sm:text-base font-medium cursor-pointer">
+                        {/* <div className="flex flex-col sm:flex-row gap-3 mt-6 sm:mt-8">
+                            <button  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm sm:text-base font-medium cursor-pointer">
                                 Save Changes
                             </button>
                             <button className="flex-1 px-4 py-2 rounded-lg transition-colors text-sm sm:text-base font-medium border border-gray-300 dark:border-gray-600  dark:text-gray-300  bg-white hover:bg-primary-600 hover:text-white text-gray-700 cursor-pointer dark:bg-gray-700 dark:hover:bg-primary-600">
                                 Reset
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>

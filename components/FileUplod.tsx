@@ -92,7 +92,7 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
                 type="button"
                 onClick={handleTriggerClick}
                 disabled={uploading}
-                className="cursor-pointer inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
+                className="cursor-pointer inline-flex items-center my-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium">
                 {uploading ? (
                 <>
                     <Loader2 className="animate-spin w-4 h-4 mr-2" />
@@ -102,8 +102,8 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
                 <>Select {fileType === "video" ? "Video" : "Image"}</>
                 )}
             </button>
-            {uploading && onProgress && ( <progress className="progress w-full" value={progress} max={100} />)}
-            {error && <div className="text-red-500 text-sm">{error}</div>}
+            {/* {uploading && onProgress && ( <progress className="progress w-full" value={progress} max={100} />)}
+            {error && <div className="text-red-500 text-sm">{error}</div>} */}
         </div>
     );
 };
