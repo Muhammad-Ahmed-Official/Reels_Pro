@@ -1,9 +1,13 @@
 import { connectionToDatabase } from "@/lib/db";
+import { Follow } from "@/models/Follow";
 import { User } from "@/models/User";
+import { Video } from "@/models/Video";
 import { asyncHandler } from "@/utils/AsyncHandler";
 import { nextError, nextResponse } from "@/utils/Responses";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
+
 
 
 export const GET = asyncHandler(async (request:NextRequest): Promise<NextResponse> => {
@@ -12,11 +16,20 @@ export const GET = asyncHandler(async (request:NextRequest): Promise<NextRespons
     const token = await getToken({ req: request });
     if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
 
-    
-    const currentUser = await User.findById(token._id);
+    const userId = new mongoose.Types.ObjectId(token._id);
+
+    const [postCount, followerCount, followingCount, currentUser] = await Promise.all([
+        Video.countDocuments({ user: userId }),
+        Follow.countDocuments({ following: userId }),
+        Follow.countDocuments({ follower: userId }),
+        User.findById(userId).select("-password")
+    ]);
     if(!currentUser) return nextError(400, "User not found");
-    return nextResponse(200, '', currentUser);
+    
+    return nextResponse(200, '', { currentUser, stats: { postCount, followerCount, followingCount }});
 })
+
+
 
 
 export const POST = asyncHandler(async (request:NextRequest): Promise<NextResponse> => {

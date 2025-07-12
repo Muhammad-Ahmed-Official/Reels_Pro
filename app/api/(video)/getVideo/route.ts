@@ -30,26 +30,56 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
             },
             { $unwind: { path: "$owner", preserveNullAndEmptyArrays: true} },
 
+            // {
+            //     $lookup: {
+            //         from: "follows",
+            //         localField: "owner._id",
+            //         foreignField: "following",
+            //         as: "followerList",
+            //     }
+            // },
+            // {
+            //     $lookup: {
+            //         from: "follows",
+            //         localField: "owner._id",
+            //         foreignField: "follower",
+            //         as: "followingList",
+            //     }
+            // },
+            // {
+            //     $addFields: {
+            //         followerCount: { $size: { $ifNull: ["$followerList", []]} },
+            //         followingCount: { $size: { $ifNull: ["$followingList", []]} },
+            //     }
+            // },
             {
                 $lookup: {
-                    from: "follows",
-                    localField: "owner._id",
-                    foreignField: "following",
-                    as: "followerList",
-                }
-            },
-            {
-                $lookup: {
-                    from: "follows",
-                    localField: "owner._id",
-                    foreignField: "follower",
-                    as: "followingList",
+                from: "playlists",
+                let: { videoId: "$_id" },
+                pipeline: [
+                    {
+                    $match: {
+                        $expr: {
+                        $and: [
+                            { $eq: ["$user", new mongoose.Types.ObjectId(token._id)] },
+                            { $in: ["$$videoId", "$videos"] }
+                        ]
+                        }
+                    }
+                    }
+                ],
+                as: "matchedVideo"
                 }
             },
             {
                 $addFields: {
-                    followerCount: { $size: { $ifNull: ["$followerList", []]} },
-                    followingCount: { $size: { $ifNull: ["$followingList", []]} },
+                    isSaved: {
+                    $cond: {
+                        if: { $gt: [{ $size: "$matchedVideo" }, 0] },
+                        then: true,
+                        else: false
+                    }
+                    }
                 }
             },
             // Lookup likes
@@ -75,7 +105,7 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
             },
             {
                 $addFields: {
-                    isLikedCurrentUser: {
+                    isLikedVideo: {
                         $in: [new mongoose.Types.ObjectId(token._id), "$likedUserIds"]
                     }
                 }
@@ -131,32 +161,44 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
             {
             $addFields: {
                 commentWithUser: {
-                $ifNull: [
-                    {
-                    $map: {
-                        input: "$comments",
-                        as: "comment",
-                        in: {
-                        _id: "$$comment._id",
-                        text: "$$comment.text",
-                        createdAt: "$$comment.createdAt",
-                        user: {
-                            $arrayElemAt: [
-                            {
-                                $filter: {
-                                input: "$commentUsers",
-                                as: "cu",
-                                cond: { $eq: ["$$cu._id", "$$comment.user"] }
+                    $ifNull: [
+                        {
+                        $map: {
+                            input: "$comments",
+                            as: "comment",
+                            in: {
+                            _id: "$$comment._id",
+                            text: "$$comment.comment",
+                            createdAt: "$$comment.createdAt",
+                            user: {
+                                $let: {
+                                vars: {
+                                    userMatch: {
+                                    $arrayElemAt: [
+                                        {
+                                        $filter: {
+                                            input: "$commentUsers",
+                                            as: "cu",
+                                            cond: { $eq: ["$$cu._id", "$$comment.user"] }
+                                        }
+                                        },
+                                        0
+                                    ]
+                                    }
+                                },
+                                in: {
+                                    _id: "$$userMatch._id",
+                                    userName: "$$userMatch.userName",
+                                    profilePic: "$$userMatch.profilePic",
+                                    isVerified: "$$userMatch.isVerified"
                                 }
-                            },
-                            0
-                            ]
+                                }
+                            }
+                            }
                         }
-                        }
-                    }
-                    },
-                    []
-                ]
+                        },
+                        []
+                    ]
                 }
             }
             },
@@ -174,15 +216,16 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
                         isVerified: "$owner.isVerified",
                     },
                     likesCount: 1,
-                    isLikedCurrentUser: 1,
+                    isLikedVideo: 1,
                     likedUserInfo: {
                         userName: 1,
                         profilePic: 1
                     },
-                    followerCount: 1,
-                    followingCount: 1,
+                    // followerCount: 1,
+                    // followingCount: 1,
                     commentWithUser: 1,
                     isFollow: 1,
+                    isSaved: 1,
                 }
             }  
         ]);

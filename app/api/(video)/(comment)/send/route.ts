@@ -37,10 +37,8 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("videoId");
     if(!id) nextError(200, "Missing reqiured fields");
-
-    const videoId = new mongoose.Types.ObjectId(id!);
-    const comments = await Comment.findById(videoId);
-    if(!comments) return nextError(200, "Error in getting comment");
+    const comments = await Comment.find({ videoId: id }).sort({ createdAt: -1 });
+    if(!comments) return nextError(400, "Error in getting comment");
 
     const tree = buildCommentTree(comments);
     return nextResponse(200, "Comment fetched successfully", tree);
@@ -58,8 +56,8 @@ export const POST = asyncHandler(async (request:NextRequest):Promise<NextRespons
     const { videoId, comment } = await request.json();
     if(!videoId) return nextError(400, "VideoId is reqired");
     if(!comment) return nextError(400, "Missing field");
-
-    await Comment.create({user: new mongoose.Types.ObjectId(token._id), video: videoId, comment, parentCommentId: null,})
+    console.log(videoId)
+    await Comment.create({user: new mongoose.Types.ObjectId(token._id), videoId: new mongoose.Types.ObjectId(videoId), comment, parentCommentId: null,})
     return nextResponse(201, "Comment successfully");
 })
 

@@ -8,22 +8,36 @@ export type VideosFormData = Omit<IVideo, "_id" | "user" | "views">;
 
 export type UserFromData = Pick<User, "userName" | "email" | "password">;
 
-export interface IUserInfo {
-    _id: string;
-  userName: string;
-  profilePic: string;
-  isVerified?:boolean;
-}
+// export interface IComment {
+//   _id: string;
+//   text: string;
+//   createdAt: string;
+//   user: {
+//     _id: string;
+//     userName: string;
+//     profilePic?: string;
+//     isVerified?: boolean;
+//   };
+// }
+
 
 export type VideoFormData = IVideo & {
     _id: string;
     owner: IUserInfo;
-    isLikedCurrentUser?: boolean;
+    isLikedVideo?: boolean;
     commentWithUser: Comment[];
     likesCount: number;
     isFollow: boolean;
+    isSaved: boolean;
 }
 
+
+export interface IUserInfo {
+  _id: string;
+  userName: string;
+  profilePic: string;
+  isVerified?:boolean;
+}
 
 export interface IVideoDetail {
   _id: string;
@@ -35,7 +49,21 @@ export interface IVideoDetail {
   owner: IUserInfo;
 }
 
+
+export type PlaylistFormData = Omit<Playlist, "videos"> & {
+    user: {
+        _id: string;
+        userName: string;
+        email: string;
+    }
+    videos: IVideoDetail[];
+    // createdAt: Date;
+} 
+
+
+
 export type LikeFormData = Omit<Like, "like">
+
 
 type FetchOptions = {
     method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -154,11 +182,24 @@ class ApiClient{
 
 
     async createComment(id: string, comment: string){
-        return this.fetch("comment-video", {
+        return this.fetch("send", {
             method: "POST",
             body: {videoId: id, comment},
         })
     };
+
+
+    async replyComment(videoId: string, comment: string, parentCommentId: string){
+        return  this.fetch("reply", {
+            method: "POST",
+            body: {videoId, comment, parentCommentId}
+        })
+    }
+    // async getComment(id: string){
+    //     return this.fetch<{data:Comment[]}>(`send?videoId=${id}`)
+    // };
+
+
 
 
 
@@ -171,37 +212,46 @@ class ApiClient{
 
 
 
-    async createPlaylist(playlistName: string):Promise<{ data: Playlist }>{
-        return this.fetch("playlist", {
+    // async createPlaylist(playlistName: string):Promise<{ data: Playlist }>{
+    //     return this.fetch("playlist", {
+    //         method: "POST",
+    //         body: { playlistName },
+    //     })
+    // };
+    // async getPlaylist(){
+    //     const res = await this.fetch<{data: PlaylistFormData[]}>("playlist");
+    //     return res.data;
+    // }
+    // async deletePlaylist(playlistName: string){
+    //     return this.fetch("playlist", {
+    //         method: "DELETE",
+    //         body: { playlistName },
+    //     })
+    // };
+
+
+
+    async saveVideo(id: string){
+        return this.fetch(`save-video?id=${id}`, {
             method: "POST",
-            body: { playlistName },
         })
     };
 
 
 
-    async getPlaylist(){
-        const res = await this.fetch<{data: Playlist[]}>("playlist");
-        return res.data;
+    async getSavedVideo(){
+        return this.fetch<{data: PlaylistFormData[]}>("save-video");
     }
 
 
 
-    async deletePlaylist(playlistName: string){
-        return this.fetch("playlist", {
+    async deleteSaved(id:string){
+        return this.fetch(`save-video?id=${id}`, {
             method: "DELETE",
-            body: { playlistName },
-        })
-    };
-
-
-
-    async saveVideo(playlistId: string, videoId: string){
-        return this.fetch("save-video", {
-            method: "POST",
-            body: {playlistId, videoId},
         })
     }
+
+
 
     async viewVideo(id: string){
         return this.fetch(`view/${id}`, {

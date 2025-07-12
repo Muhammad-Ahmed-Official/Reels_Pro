@@ -72,8 +72,8 @@ export default function ReelCard({ reel }: Prop) {
   const handleSave = async () => {
     setOpenSaveModal(true);    
     try {
-      const response = await apiClient.getPlaylist();
-      setPlaylists(response);
+      // const response = await apiClient.getPlaylist();
+      // setPlaylists(response);
     } catch (error) {
       const errorMsg = error instanceof Error ? error?.message : "Something went wrong";
       toast.error(errorMsg);

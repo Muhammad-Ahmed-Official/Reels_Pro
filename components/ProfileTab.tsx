@@ -7,9 +7,16 @@ import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 
 interface ProfileData {
-    userName: string;
-    email: string;
-    profilePic: string;
+    currentUser: {
+        userName: string;
+        email: string;
+        profilePic: string;
+    },
+    stats: {
+        postCount: number,
+        followerCount: number,
+        followingCount: number,
+    }
 }
 
 const ProfileTab = () => {
@@ -84,7 +91,8 @@ const ProfileTab = () => {
 
     
     
-    // console.log(userInfo);
+    console.log(userInfo);
+    
     return(
     <div className="p-6">
         <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 ml-14 lg:ml-0">Profile</h2>
@@ -95,12 +103,12 @@ const ProfileTab = () => {
                     <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 lg:space-x-6">
                         <div className="flex-shrink-0">
                             <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full bg-primary-600 text-white flex items-center justify-center">
-                                <Image src={userInfo?.profilePic} alt="profile" width={90} height={90} className="object-cover rounded-full" />
+                                <Image src={userInfo?.currentUser?.profilePic} alt="profile" width={90} height={90} className="object-cover rounded-full" />
                             </div>
                         </div>
                         <div className="text-center sm:text-left flex-1">
-                            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{userInfo.userName?.slice(0,1).toUpperCase() + userInfo?.userName?.slice(1)}</h3>
-                            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">@{userInfo.userName}</p>
+                            <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">{userInfo?.currentUser?.userName?.slice(0,1).toUpperCase() + userInfo?.currentUser?.userName?.slice(1)}</h3>
+                            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">@{userInfo?.currentUser?.userName}</p>
                             <p className="mt-2 text-sm sm:text-base text-gray-700 dark:text-gray-300 max-w-2xl">
                                 Content creator and developer passionate about technology and design.
                             </p>
@@ -122,7 +130,7 @@ const ProfileTab = () => {
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
                                 <input
                                     type="text"
-                                    value={userInfo.userName?.slice(0,1).toUpperCase() + userInfo.userName?.slice(1)}
+                                    value={userInfo?.currentUser.userName?.slice(0,1).toUpperCase() + userInfo?.currentUser.userName?.slice(1)}
                                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm sm:text-base"
                                 />
                             </div>
@@ -130,7 +138,7 @@ const ProfileTab = () => {
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
                                 <input
                                     type="email"
-                                    value={userInfo?.email}
+                                    value={userInfo?.currentUser.email}
                                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm sm:text-base"
                                 />
                             </div>
@@ -231,20 +239,20 @@ const ProfileTab = () => {
             {/* Additional Stats Section */}
             <div className="mt-4 sm:mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="card hover:bg-primary-50 dark:bg-primary-950 dark:hover:bg-primary-950 p-3 sm:p-4 text-center">
-                    <div className="text-lg sm:text-2xl font-bold text-primary-600">127</div>
+                    <div className="text-lg sm:text-2xl font-bold text  -primary-600">{userInfo?.stats?.postCount}</div>
                     <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Posts</div>
                 </div>
                 <div className="card hover:bg-primary-50 dark:bg-primary-950 dark:hover:bg-primary-950 p-3 sm:p-4 text-center">
-                    <div className="text-lg sm:text-2xl font-bold text-green-600">1.2K</div>
+                    <div className="text-lg sm:text-2xl font-bold text-green-600">{userInfo?.stats?.followerCount}</div>
                     <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Followers</div>
                 </div>
                 <div className="card hover:bg-primary-50 dark:bg-primary-950 dark:hover:bg-primary-950 p-3 sm:p-4 text-center">
-                    <div className="text-lg sm:text-2xl font-bold text-purple-600">856</div>
+                    <div className="text-lg sm:text-2xl font-bold text-purple-600">{userInfo?.stats?.followingCount}</div>
                     <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Following</div>
                 </div>
                 <div className="card hover:bg-primary-50 dark:bg-primary-950 dark:hover:bg-primary-950 p-3 sm:p-4 text-center">
                     <div className="text-lg sm:text-2xl font-bold text-orange-600">4.8</div>
-                    <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Rating</div>
+                    <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Views</div>
                 </div>
             </div>
         </div>

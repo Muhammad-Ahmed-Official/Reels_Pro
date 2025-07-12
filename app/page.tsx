@@ -12,15 +12,16 @@ import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import toast from "react-hot-toast"
 import { signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import PlaylistTab from "@/components/PlaylistTab"
+import WatchLaterTab from "@/components/WatchLaterTab"
 
 // Tab Components
-type TabType = "home" | "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "playlist"
+type TabType = "home" | "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "watchLater"
 
 export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("home");
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+    const [collectionModalOpen, setCollectionModalOpen] = useState<boolean>(false);
 
     const tabs = [
         { id: "home" as TabType, label: "Home", icon: Home },
@@ -28,7 +29,7 @@ export default function ProfilePage() {
         { id: "notifications" as TabType, label: "Notifications", icon: Bell },
         { id: "messages" as TabType, label: "Messages", icon: MessageCircle },
         { id: "create" as TabType, label: "Create", icon: Plus },
-        { id: "playlist" as TabType, label: "Playlist", icon: ListVideo },
+        { id: "watchLater" as TabType, label: "Watch Later", icon: ListVideo },
         { id: "profile" as TabType, label: "Profile", icon: User },
         { id: "logout" as TabType, label: "Logout", icon: LogOut },
     ]
@@ -45,8 +46,8 @@ export default function ProfilePage() {
                 return <MessagesTab />
             case "profile":
                 return <ProfileTab />
-            case "playlist":
-                return <PlaylistTab />
+            // case "playlist":
+            //     return <PlaylistTab />
             default:
                 return <HomeTab />
         }
@@ -89,6 +90,8 @@ export default function ProfilePage() {
                                             setIsCreateModalOpen(true)
                                         } else if (tab.id === "logout"){
                                             signOut({ callbackUrl: "/login" });
+                                        } else if (tab.id === "watchLater") {
+                                            setCollectionModalOpen(!collectionModalOpen);
                                         } else {
                                             setActiveTab(tab.id)
                                             setSidebarOpen(false)
@@ -118,6 +121,11 @@ export default function ProfilePage() {
             <CreateTab
                 isModalOpen={isCreateModalOpen}
                 setIsModalOpen={setIsCreateModalOpen}
+            />
+
+            <WatchLaterTab
+                collectionModalOpen={collectionModalOpen}
+                setCollectionModalOpen={setCollectionModalOpen}
             />
 
         </div>

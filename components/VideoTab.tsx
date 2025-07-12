@@ -51,7 +51,8 @@ const VideosTab = () => {
                 {videos.length > 0 ? videos?.map((video) => (
                     <div key={video._id?.toString()} className="card bg-base-100 shadow-xl">
                         <figure className="bg-gray-200 h-48 flex items-center justify-center">
-                            <Video className="w-12 h-12 text-gray-400" />
+                            <video src={video.videoUrl} />
+                            {/* <Video className="w-12 h-12 text-gray-400" /> */}
                         </figure>
                         <div className="card-body">
                             <div className="flex items-center justify-between">

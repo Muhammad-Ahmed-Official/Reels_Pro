@@ -1,6 +1,6 @@
 "use client"
 
-import { apiClient, type VideoFormData } from "@/lib/api-client"
+import { apiClient, type PlaylistFormData, type VideoFormData } from "@/lib/api-client"
 import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Play, VolumeX, Volume2, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import CommentModal from "./CommentModal"
@@ -8,6 +8,7 @@ import Image from "next/image"
 import toast from "react-hot-toast"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import { useSession } from "next-auth/react"
+import { useParams } from "next/navigation"
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) {
@@ -19,19 +20,20 @@ const formatNumber = (num: number): string => {
   return num.toString()
 }
 
+
 const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
-  const [isLiked, setIsLiked] = useState(reel.isLikedCurrentUser)
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const [openSaveModal, setOpenSaveModal] = useState(false);
+  const [isLiked, setIsLiked] = useState(reel.isLikedVideo)
+  const [isBookmarked, setIsBookmarked] = useState(reel.isSaved);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const [commentButtonPosition, setCommentButtonPosition] = useState<{ x: number; y: number } | undefined>()
   const [isFollowing, setIsFollowing] = useState(reel?.isFollow);
-  
-  
-  //   const [likes, setLikes] = useState(reel.likes)
+  const { id } = useParams();
+  // const [openSaveModal, setOpenSaveModal] = useState(false);
+  // const [playlistName, setPlaylistName] = useState<PlaylistFormData[]>([]);
   // const { data: session } = useSession();
+  // const [likes, setLikes] = useState(reel.likes)
   // console.log(session?.user?._id)
   // console.log(reel) 
 
@@ -69,33 +71,33 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
 
   const toggleLike = async() => {
     setIsLiked(!isLiked)
-
     await asyncHandlerFront(
         async() => {
             await apiClient.likeUnlikeVideo(reel?._id);
             toast.success(isLiked ? "Video liked successfully" : "Video unliked successfully" )
         }, 
         (error) => {
-            toast.error(error.message)
+          toast.error(error.message)
         }
     )
-   }
+  }
 
-   const toggleBookmark = async() => {
+
+  const toggleBookmark = async() => {
     setIsBookmarked(!isBookmarked)
-    setOpenSaveModal(true);
     await asyncHandlerFront(
       async() => {
-        // await apiClient.getPlaylist();
+        await apiClient.saveVideo(id?.toString()!);
+        toast.success(!isBookmarked ? "Video saved successfully" : "Video unsaved successfully");
       }, 
       (error) => {
         toast.error(error.message)
       }
     )
-   }
+  }
 
 
-   const handleFollow = async () => {
+  const handleFollow = async () => {
     setIsFollowing(!isFollowing);
     await asyncHandlerFront(
         async() => {
@@ -106,19 +108,23 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
             toast.error(error.message)
         }
     )
-   }
+  }
 
-// setLikes(isLiked ? likes - 1 : likes + 1)
-//   const toggleBookmark = () => {
-//     setIsBookmarked(!isBookmarked)
-//   }
 
+  const handleCheckboxChange = async(isChecked: boolean, playlistId: string, videoId: string) => {
+  }
+   
+   
+   // setLikes(isLiked ? likes - 1 : likes + 1)
+   //   const toggleBookmark = () => {
+   //     setIsBookmarked(!isBookmarked)
+   //   }
   const handleCommentClick = () => {
     if (commentButtonRef.current) {
       const rect = commentButtonRef.current.getBoundingClientRect()
       setCommentButtonPosition({
         x: rect.left,
-        y: rect.top,
+        y: rect.top - 50,
       })
     }
     setIsCommentModalOpen(true)
@@ -227,7 +233,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                 </div>
               </button>
 
-              { openSaveModal && (
+              {/* { openSaveModal && (
                   <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50 p-4">
                   <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
                     <div className="flex justify-between items-center mb-4">
@@ -236,16 +242,20 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                     </div>
 
                     <div className="space-y-1 flex flex-col gap-1 justify-center">
-                      {/* {playlists && playlists.map((pl) => (
+                      {playlistName && playlistName.map((pl) => (
                         <label className="label" key={pl._id}>
-                          <input onChange={(e) =>  handleCheckboxChange(e.target.checked, pl._id!, reel?._id!.toString())} checked={pl.isChecked} type="checkbox" className="checkbox checkbox-sm checkbox-accent" /> {pl.playlistName} 
+                          <input
+                            type="checkbox" checked={pl.isChecked} 
+                            className="checkbox bg-primary-400 checkbox-sm"
+                            onChange={(e) =>  handleCheckboxChange(e.target.checked, pl._id!, reel?._id!.toString())} 
+                            /> {pl.playlistName} 
                         </label>
                       )) 
-                      } */}
+                      }
                     </div>
                     </div>
                   </div>
-                ) }
+                ) } */}
 
               {/* More */}
               <button className="flex flex-col items-center">
@@ -264,13 +274,13 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
       </div>
 
       {/* Comment Modal */}
-      {/* <CommentModal
+      <CommentModal
         isOpen={isCommentModalOpen}
         onClose={closeCommentModal}
         reelId={reel._id}
         commentCount={reel?.commentWithUser}
         position={commentButtonPosition}
-      /> */}
+      />
     </>
   )
 }

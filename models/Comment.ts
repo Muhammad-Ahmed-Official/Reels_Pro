@@ -1,8 +1,11 @@
 import mongoose, { model, models, Schema } from "mongoose";
 
 export interface Comment {
+    _id: string;
+    profilePic: string;
+    // isVerified: boolean;
     comment: string;
-    userName: string;
+    user: mongoose.Types.ObjectId;
     videoId: mongoose.Types.ObjectId;
     parentCommentId: mongoose.Types.ObjectId;
     createdAt?: Date;
@@ -14,9 +17,8 @@ const commentSchema = new Schema<Comment>({
         type: String,
         required: [true, "Comment is required"],
     },
-    userName: {
-        type: String,
-        required: true,
+    user: {
+        type: Schema.Types.ObjectId,
         index: true,
     },
     videoId: {
