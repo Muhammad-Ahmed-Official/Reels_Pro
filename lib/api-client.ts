@@ -3,10 +3,16 @@ import { Like } from "@/models/Like";
 import { Playlist } from "@/models/Playlist";
 import { User } from "@/models/User";
 import { IVideo } from "@/models/Video";
+import { IChat } from "@/server/Models/Chat.models";
+import { INotification } from "@/server/Notification.model";
 
 export type VideosFormData = Omit<IVideo, "_id" | "user" | "views">;
 
 export type UserFromData = Pick<User, "userName" | "email" | "password">;
+
+export type NotificaitonData = INotification
+
+export type ChatData = IChat
 
 // export interface IComment {
 //   _id: string;
@@ -70,6 +76,8 @@ type FetchOptions = {
     body?: any;
     headers?: Record<string, string>;
 }
+
+const server = "http://localhost:3000/api";
 
 class ApiClient{
     private async fetch<T>( endPoint: string, options: FetchOptions = {} ) : Promise<T> {
@@ -171,6 +179,14 @@ class ApiClient{
     };
 
 
+    async createNotification(notifiData: NotificaitonData){
+        return this.fetch(`${server}/notify`, {
+            method: "POST",
+            body: notifiData,
+        })
+    }
+
+
 
     async likeUnlikeVideo(id: string){
         return this.fetch("like-video", {
@@ -198,7 +214,6 @@ class ApiClient{
     // async getComment(id: string){
     //     return this.fetch<{data:Comment[]}>(`send?videoId=${id}`)
     // };
-
 
 
 
@@ -257,6 +272,33 @@ class ApiClient{
         return this.fetch(`view/${id}`, {
           method: "POST",
         })
+    }
+
+
+    async createMsg(data:IChat){
+        return this.fetch(`message`, {
+            method: "POST",
+            body: data
+        })
+    }
+
+
+    async getMsg(id:string){
+        const res = await this.fetch<{data: ChatData}>(`message?id=${id}`);
+        return res.data;
+    }
+
+
+    async searchUserChat(userName:string){
+        const res = await this.fetch<{data: ChatData}>(`search-user?userName=${userName}`);
+        return res.data;
+    }
+
+
+
+    async sidebarUsers(){
+        const res = await this.fetch<{data: ChatData}>("sidebar-users");
+        return res.data;
     }
     
 }

@@ -30,16 +30,15 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const [commentButtonPosition, setCommentButtonPosition] = useState<{ x: number; y: number } | undefined>()
   const [isFollowing, setIsFollowing] = useState(reel?.isFollow);
   const { id } = useParams();
+  const { data: session } = useSession();
   // const [openSaveModal, setOpenSaveModal] = useState(false);
   // const [playlistName, setPlaylistName] = useState<PlaylistFormData[]>([]);
-  // const { data: session } = useSession();
   // const [likes, setLikes] = useState(reel.likes)
-  // console.log(session?.user?._id)
-  // console.log(reel) 
-
+  // console.log(session?.user) 
   const videoRef = useRef<HTMLVideoElement>(null)
   const commentButtonRef = useRef<HTMLButtonElement>(null)
 
+  // console.log()
 
   useEffect(() => {
     if (isActive && videoRef.current) {
@@ -103,6 +102,13 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         async() => {
             await apiClient.follow(reel.owner._id as string);
             toast.success(!isFollowing ? "Follow successfully" : "Unfollow successfully");
+            await apiClient.createNotification({
+              sender: reel.owner._id,
+              recipient: session?.user?._id as string,
+              msg: !isFollowing ? "Follow's you" : "Unfollow's you",
+              typeNotification: "follow",
+              createdAt: new Date(),
+            })
         }, 
         (error) => {
             toast.error(error.message)
@@ -189,9 +195,9 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                     </div>
                   )}
                 </div>
-                <button onClick={handleFollow} className="ml-4 px-3 py-1 cursor-pointer border border-white rounded-full text-white text-xs font-semibold">
+                {session?.user?._id !== reel?.owner?._id && <button onClick={handleFollow} className="ml-4 px-3 py-1 cursor-pointer border border-white rounded-full text-white text-xs font-semibold">
                   {isFollowing ? "Following" : "Follow" }
-                </button>
+                </button>}
               </div>
 
               {/* Description */}

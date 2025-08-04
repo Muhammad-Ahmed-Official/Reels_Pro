@@ -5,6 +5,8 @@ import Provider from "../components/Provider";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "./context/themeContext";
 import { ProfileProvider } from "./context/profileContext";
+import { SocketProvider } from "./context/SocketContext";
+import { UserProvider } from "./context/userContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,16 +31,19 @@ export default function RootLayout({
   return (  
   <html lang="en">
     <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}  suppressHydrationWarning >
-      <ThemeProvider>
-        <ProfileProvider>
-          <Provider>
-              { children }
-            <Toaster position="top-right" />
-          </Provider>
-        </ProfileProvider>
-      </ThemeProvider>
+      <Provider>
+        <UserProvider>
+          <SocketProvider>
+            <ThemeProvider>
+              <ProfileProvider>
+                    { children }
+                  <Toaster position="top-right" />
+              </ProfileProvider>
+            </ThemeProvider>
+          </SocketProvider>
+        </UserProvider>
+      </Provider>
     </body>
   </html>
-
   );
 }

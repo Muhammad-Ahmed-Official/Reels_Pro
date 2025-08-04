@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation"
 import WatchLaterTab from "@/components/WatchLaterTab"
 
 // Tab Components
-type TabType = "home" | "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "watchLater"
+type TabType = "home" | "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "watchLater" | "messages/:userName"
 
 export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("home");
@@ -43,6 +43,7 @@ export default function ProfilePage() {
             case "notifications":
                 return <NotificationsTab />
             case "messages":
+                // case "messages/:userName":
                 return <MessagesTab />
             case "profile":
                 return <ProfileTab />
