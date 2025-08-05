@@ -1,12 +1,6 @@
-// socket.emit  frontend
-// backened
-// socket.on
-// io.emilt
-
-import dbConnect from '../db.js';
+import { consumeNotifications } from '../Consumer/notificationConsumer.js';
 import { Chat } from '../Models/Chat.models.js';
 import { getChannel } from './rabbitmq.js';
-
 import { Server } from 'socket.io'
 
 export class SocketService {
@@ -22,11 +16,15 @@ export class SocketService {
         });
     };
 
-    public initListener(){
+    public async initListener(){
         const io = this.io;
+        
+        // Start consumer ONCE
+        await consumeNotifications(io);
+
         io.on('connection', (socket) => {
             const userId = socket.handshake?.query?.userId as string;
-            console.log(`Socket connected: ${socket.id} for user ${userId}`);
+            // console.log(`Socket connected: ${socket.id} for user ${userId}`);
             if(userId && userId !== undefined){
                 this.userSocketMap.add(userId)
             }
@@ -53,7 +51,6 @@ export class SocketService {
                 const payload = { sender, receiver, message };
                 io.to(receiver).emit("newMessage", payload);
                 try {
-                    // await dbConnect();
                     await Chat.create(payload)
                 } catch (error: any) {
                    console.error("Message DB save failed:", error.message);
@@ -73,14 +70,12 @@ export class SocketService {
             });
 
 
-
             socket.on("edit", async(data) => {
                const { _id, receiver, sender, message } = data;
                 if (!receiver || !_id) return;
                 const payload = { receiver, sender, message };
                 io.to(receiver).emit("editMsg", payload);
                 try {
-                    // await dbConnect();
                     await Chat.findByIdAndUpdate(_id, { message });
                 } catch (error: any) {
                    console.error("Message DB save failed:", error.message);
@@ -88,21 +83,31 @@ export class SocketService {
             });
             
 
-            socket.on("userStartTyping", (data) => {
-                console.log(`User ${data?.userId} is typing in chat ${data.chatId}`);
-                socket.to(data?.chatId).emit("userStartTyping", {
-                    chatId: data.chatId,
-                    userId: data?.userId,
-                })
-            })
+            socket.on("startTyping", (receiver) => {
+                console.log(`User is typing in chat ${receiver}`);
+                if(!receiver) return; 
+                io.to(receiver).emit("startTyping", receiver)
+            });
 
-            socket.on("userStopTyping", (data) =>{
-                console.log(`User ${data?.userId} is stop typing in chat ${data.chatId}`);
-                socket.to(data?.chatId).emit("userStopTyping", {
-                    chatId: data.chatId,
-                    userId: data?.userId,
-                })
-            })
+
+            socket.on("stopTyping", (receiver) =>{
+                console.log(`User is stop typing in chat ${receiver}`);
+                if(!receiver) return; 
+                io.to(receiver).emit("stopTyping", receiver)
+            });
+
+
+            socket.on("seenMsg", async(sender) => {
+                // console.log(sender, "sender");
+                if(!sender) return;
+                io.to(sender).emit("seenMsg", sender);
+                try {
+                    await Chat.updateMany( { sender, seen: false }, { $set: { seen: true } } )
+                } catch (error: any) {
+                   console.error("Message DB save failed:", error.message);
+                }
+            });
+
             
             socket.on("disconnect", () => {
                 console.log(`Client disconnected: ${socket.id} for user ${userId}`);
@@ -112,12 +117,12 @@ export class SocketService {
                 }
             });
 
+
             socket.on("connect_error", (error) => {
                 console.log("Socket Connection Error", error);
             });
 
         });
-
     }
 
     get io(){
@@ -125,24 +130,12 @@ export class SocketService {
     }
 }
 
-// const channel = getChannel();
-            // const queueName = `queue_${userId}`
-            // channel.assertQueue(queueName, { durable: true });
-            // channel.bindQueue(queueName, "direct_notif", userId);
-            // channel.consume(queueName, (msg) => {
-            //     if(msg){
-            //         const notif =  JSON.parse(msg.content.toString());
-            //         socket.emit("notification", notif);
-            //         channel.ack(msg);
-            //     }
-            // });
-
-            // const fanoutQueue = `fanout`;
+          // const fanoutQueue = `fanout`;
             // channel.assertQueue(fanoutQueue, { durable: true });
             // channel.bindQueue(fanoutQueue, "fanout_notif", "")
             // channel.consume(fanoutQueue, (msg) => {
             //     if(msg){
-            //        const notif =  JSON.parse(msg.content.toString());
+            //         const notif =  JSON.parse(msg.content.toString());
             //         socket.emit("notification", notif);
             //         channel.ack(msg); 
             //     }

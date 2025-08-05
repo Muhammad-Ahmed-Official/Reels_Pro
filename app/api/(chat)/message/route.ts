@@ -33,10 +33,10 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
     const user = await User.findOne({ _id: userId });
     if (!user) return nextError(400, "User not found!");
 
-    await Chat.updateMany(
-        { sender: userId, receiver: token._id },
-        { $set: { seen: true } }   
-    )
+    // await Chat.updateMany(
+    //     { sender: userId, receiver: token._id, seen: false },
+    //     { $set: { seen: true } }   
+    // )
 
     const messages = await Chat.find(
         {

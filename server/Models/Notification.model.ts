@@ -5,7 +5,7 @@ export interface INotification {
     _id?: typeof Types.ObjectId;
     typeNotification: "like" | "follow" | "comment" | "video";
     sender: string;
-    recipient: string;
+    recipient?: string;
     reelId?: string;
     isRead?: boolean;
     msg: string;
@@ -26,10 +26,10 @@ const notificationSchema = new Schema<INotification>({
         type: String,
         required: true,
     },
-    recipient: {
-        type: String,
-        required: true,
-    },
+    // recipient: {
+    //     type: String,
+    //     required: true,
+    // },
     msg: {
         type: String,
         required: true,

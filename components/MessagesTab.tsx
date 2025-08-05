@@ -1,25 +1,7 @@
   // const [isTyping, setIsTyping] = useState(false);
-  // const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
-  // const handleTyping = () => {
-  //   if(!socket || !activeUser?._id) return;
-  //   if(!isTyping){
-  //     setIsTyping(true);
-  //     socket.emit("userStartTyping", {
-  //       chatId: activeUser?._id,
-  //       userId: session?.user?._id,
-  //     })
 
-  //     setTimeout(() => {
-  //       setIsTyping(false);
-  //       socket.emit("userStopTyping", {
-  //         chatId: activeUser?._id,
-  //         userId: session?.user?._id,
-  //       })
-  //     }, 2000);
 
-  //   };
-  // };
 
 
   
@@ -43,8 +25,7 @@
   //   });
 
   //   return () => {
-  //     socket.off("userStartTyping");
-  //     socket.off("userStopTyping");
+ 
   //     socket.emit("leaveRoom", { chatId: activeUser._id });
   //   };
   // }, [socket]);
@@ -81,16 +62,7 @@
   // import { messageSchema } from "@/schemas/messageSchema";
 
 
-  {/* {typingUsers.includes(activeUser._id) && (
-    <div className="flex items-center space-x-2 px-2 pb-1">
-      <span className="text-sm text-gray-500">Typing</span>
-      <div className="flex space-x-1">
-        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]"></span>
-        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]"></span>
-        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]"></span>
-      </div>
-    </div>
-  )} */}
+  
    
   // useEffect(() => {
   //   const handleResize = () => {
@@ -115,7 +87,6 @@ import { useDebounceCallback } from "usehooks-ts";
 import Image from "next/image";
 import { useSocket } from "@/app/context/SocketContext";
 import { useUser } from "@/app/context/userContext";
-
 
 
 const MessagesTab = () => {
@@ -149,6 +120,7 @@ const MessagesTab = () => {
 
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editedText, setEditedText] = useState('');
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
   // console.log("onlineUsers:-",onlineUsers);
 
@@ -186,6 +158,25 @@ const MessagesTab = () => {
     getAllUsers()
   }, [])
 
+
+  const getMessage = async() => {
+    asyncHandlerFront(
+      async () => {
+        const response = await apiClient.getMsg(activeUser?._id);
+        setMessages(response as any);
+      },
+      (error) => {
+        toast.error(error.message || "Something went wrong");
+      }
+    )
+  }
+
+  useEffect(() => {
+    activeUser?._id && getMessage()
+  }, [activeUser?._id])
+
+  // console.log(users);
+
   // 📤 Send message
   const handleSendMessage = () => {
     if (!messageInput.trim() || !activeUser._id) return;
@@ -208,7 +199,7 @@ const MessagesTab = () => {
       setMessages((prev) => [...prev, data]);
     });
 
-    socket?.on("deleteMsg", (deletedMessageId) => {
+    socket?.on("deleteMsg", (deletedMessageId: string) => {
       // console.log(deletedMessageId, "deleted")
       setMessages((prev) => prev.filter((msg) => msg.sender !== deletedMessageId));
     });
@@ -219,12 +210,42 @@ const MessagesTab = () => {
           msg?.sender === payload?.sender ? {...msg, message:payload?.message} : msg
         ) 
       )
-    })
+    });
+
+    
+    socket?.on("startTyping", (receiver: string) => {
+      setTypingUsers([...typingUsers, receiver])
+    });
+
+
+    socket?.on("stopTyping", (receiver: string) => {
+      setTypingUsers((prev) => prev.filter((id) => id !== receiver));
+    });
+
+
+    socket?.on("seenMsg", (senderId: string) => {
+      if (!senderId) return;
+      setMessages(prevMessages => {
+        let hasChanged = false;
+        const updatedMessages = prevMessages.map(msg => {
+          if (msg.sender === senderId && !msg.seen) {
+            hasChanged = true;
+            return { ...msg, seen: true };
+          }
+          return msg;
+        });
+
+        return hasChanged ? updatedMessages : prevMessages;
+      });
+    });
+
 
     return () => {
       socket?.off("newMessage");
       socket?.off("deleteMsg");
       socket?.off("editMsg");
+      socket?.off("startTyping");
+      socket?.off("stopTyping");
     };
   }, [socket]);
 
@@ -239,7 +260,8 @@ const MessagesTab = () => {
     // console.log(payload)
     socket?.emit("delete", payload);
     setMessages((prev) => prev.filter((msg) => msg?._id !== messageId))
-  }
+  };
+
 
   const handleUpdate = async(messageId:string, message:string) => {
     const payload = {
@@ -257,23 +279,32 @@ const MessagesTab = () => {
     setEditingMessageId(null);
     setEditedText("");
     setMenuMessageId(null);
+  };
+
+
+  const handleTyping = () => {
+    if(!socket || !activeUser?._id) return;
+    if(messageInput.trim().length > 0){
+      if(!user?._id) return;
+      let receiver =  user?._id;
+      socket.emit("startTyping", receiver);
+      setTypingUsers(prev => [...prev, receiver]);
+
+      setTimeout(() => {
+        socket.emit("stopTyping",  receiver)
+      }, 1000);
+
+    };
+  };
+
+  const handleSeen = () => {
+    if(user?._id) socket?.emit("seenMsg", user?._id)
   }
 
 
-  useEffect(() => {
-    const getMessge = async() => {
-      asyncHandlerFront(
-        async () => {
-          const response = await apiClient.getMsg(activeUser?._id);
-          setMessages(response);
-        },
-        (error) => {
-          toast.error(error.message || "Something went wrong");
-        }
-      )
-    }
-    activeUser?._id && getMessge()
-  }, [activeUser?._id])
+
+
+  // console.log(messages);
 
   
   return (
@@ -316,6 +347,7 @@ const MessagesTab = () => {
                     onClick={() => {
                       setActiveUser({...activeUser, userName: name?.userName, profilePic: name.profilePic, _id: name?._id});
                       socket?.emit("joinRoom", name?._id);
+                      handleSeen();
                     }}>
                     <div className="relative w-10 h-10">
                       <Image
@@ -364,6 +396,7 @@ const MessagesTab = () => {
 
               <button onClick={() => {
                 socket?.emit("leaveRoom", activeUser?._id);
+                socket?.off("seenMsg", activeUser?._id as any);
                 setActiveUser({ _id: "", userName: "", profilePic: "" });
               }}
               className='cursor-pointer'> <MessageCircleX /> </button>
@@ -409,14 +442,14 @@ const MessagesTab = () => {
                                     console.log('Save edited message:', editedText);
                                     handleUpdate(msg._id, editedText);
                                   }}
-                                  className="text-xs px-2 py-1 mb-0.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
+                                  className="text-xs px-1.5 py-1 mb-0.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
                                   Update
                                 </button>
                               </div>
                             ) : (
                               <>
                                 {msg.message}
-                                <CheckCheck size={18} className="inline ml-2 text-[#00a6ff]" />
+                                {isOwn && <CheckCheck size={18} className={`inline ml-2 ${msg?.seen && 'text-[#00a6ff]'}`} />}
                               </>
                             )}
 
@@ -492,6 +525,16 @@ const MessagesTab = () => {
 
               { activeUser?.userName && <div className="mt-4 flex flex-col gap-x-2">
                 {/* 👇 Typing indicator */}
+                {typingUsers.includes(activeUser._id) && (
+                  <div className="flex items-center space-x-2 px-2 pb-1">
+                    <span className="text-sm text-gray-500">Typing</span>
+                    <div className="flex space-x-1">
+                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:0ms]"></span>
+                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:150ms]"></span>
+                      <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:300ms]"></span>
+                    </div>
+                  </div>
+                )}
                 
                 {watch("image") && (
                   <div className="relative w-[150px] h-[100px] rounded-lg overflow-hidden mb-1">
@@ -507,7 +550,10 @@ const MessagesTab = () => {
                   <input
                     type="text"
                     value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
+                    onChange={(e) => {
+                      setMessageInput(e.target.value);
+                      handleTyping()
+                    }}
                     placeholder="Type a message..."
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     />

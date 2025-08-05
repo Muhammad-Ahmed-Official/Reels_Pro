@@ -1,5 +1,5 @@
 import amqplib from "amqplib";
-import { INotification } from "../Notification.model.ts";
+import { INotification } from "../Models/Notification.model.js";
 let channel: amqplib.Channel
 
 export const connectRabbitMQ = async() => {

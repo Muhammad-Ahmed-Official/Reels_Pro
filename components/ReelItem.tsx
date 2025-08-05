@@ -9,6 +9,8 @@ import toast from "react-hot-toast"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import { useSession } from "next-auth/react"
 import { useParams } from "next/navigation"
+import { useSocket } from "@/app/context/SocketContext"
+import { useUser } from "@/app/context/userContext"
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) {
@@ -38,7 +40,9 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const videoRef = useRef<HTMLVideoElement>(null)
   const commentButtonRef = useRef<HTMLButtonElement>(null)
 
-  // console.log()
+  const { socket } = useSocket();
+  const { user } = useUser();
+
 
   useEffect(() => {
     if (isActive && videoRef.current) {
@@ -102,19 +106,18 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         async() => {
             await apiClient.follow(reel.owner._id as string);
             toast.success(!isFollowing ? "Follow successfully" : "Unfollow successfully");
-            await apiClient.createNotification({
-              sender: reel.owner._id,
-              recipient: session?.user?._id as string,
-              msg: !isFollowing ? "Follow's you" : "Unfollow's you",
-              typeNotification: "follow",
-              createdAt: new Date(),
-            })
         }, 
         (error) => {
             toast.error(error.message)
         }
     )
   }
+
+//   sender: reel.owner._id,
+//   reelId: reel?._id,
+//   msg: !isFollowing ? "Follow's you" : "Unfollow's you",
+//   typeNotification: "follow",
+//   createdAt: new Date(),
 
 
   const handleCheckboxChange = async(isChecked: boolean, playlistId: string, videoId: string) => {

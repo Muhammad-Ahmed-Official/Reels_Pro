@@ -4,7 +4,7 @@ import { Playlist } from "@/models/Playlist";
 import { User } from "@/models/User";
 import { IVideo } from "@/models/Video";
 import { IChat } from "@/server/Models/Chat.models";
-import { INotification } from "@/server/Notification.model";
+import { INotification } from "@/server/Models/Notification.model";
 
 export type VideosFormData = Omit<IVideo, "_id" | "user" | "views">;
 

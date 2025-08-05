@@ -10,7 +10,7 @@ import dotenv from "dotenv";
 import { createServer } from "http";
 import dbConnect from "./db.js";
 import { connectRabbitMQ, sendNotification } from "./services/rabbitmq.js";
-import { Notification } from "./Notification.model.js";
+import { Notification } from "./Models/Notification.model.js";
 import { SocketService } from "./services/socket.js";
 
 dotenv.config({quiet:true});
@@ -30,7 +30,7 @@ app.use(cors({
 const startServer = async () => {
     try {
     await dbConnect();
-    // await connectRabbitMQ();
+    await connectRabbitMQ();
     
     const socketService = new SocketService();
     socketService.io.attach(httpServer);
