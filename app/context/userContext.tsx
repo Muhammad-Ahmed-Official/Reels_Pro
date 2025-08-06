@@ -9,14 +9,16 @@ interface IUserContext {
     userName?: string;
     email?: string;
   } | null;
+  loading: boolean;
 }
 
 const userContext = createContext<IUserContext | undefined>(undefined);
 
 export const UserProvider = ( {children}: {children:ReactNode} ) => {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const contextValue:IUserContext = {
-        user: session?.user ?? null
+        user: session?.user ?? null,
+        loading: status === 'loading',
     }
 
     return (

@@ -18,6 +18,7 @@ dotenv.config({quiet:true});
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
+app.use(express.json())
 
 // Middlewares
 app.use(cors({
@@ -48,10 +49,9 @@ const startServer = async () => {
 startServer();
 
 // Routes
-app.post("/api/notify", async (req, res) => {
+app.post("/api/sendNotification", async (req, res) => {
   try {
     const notif = req.body;
-    await Notification.create(notif);
     await sendNotification(notif);
     res.status(200).json({ success: true });
   } catch (error) {

@@ -8,20 +8,35 @@ import NotificationsTab from "@/components/NotificationsTab"
 import MessagesTab from "@/components/MessagesTab"
 import CreateTab from "@/components/CreateTab"
 import ProfileTab from "@/components/ProfileTab"
-import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
-import toast from "react-hot-toast"
-import { signOut, useSession } from "next-auth/react"
+import { signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import WatchLaterTab from "@/components/WatchLaterTab"
+import { useUser } from "./context/userContext"
+import { useSocket } from "./context/SocketContext"
+import Loader from "@/components/Loader"
 
-// Tab Components
-type TabType = "home" | "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "watchLater" | "messages/:userName"
+type TabType = "home" | "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "watchLater"
 
 export default function ProfilePage() {
     const [activeTab, setActiveTab] = useState<TabType>("home");
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
     const [collectionModalOpen, setCollectionModalOpen] = useState<boolean>(false);
+    const [unreadCount, setUnreadCount] = useState<number>(10)
+    const { socket } = useSocket();
+    const { user, loading } = useUser();
+    const router = useRouter();
+
+
+    useEffect(() => {
+    const receiver = user?._id   
+    if (socket && activeTab === "notifications") {
+        socket?.emit("joinRoom", receiver);
+        socket?.emit("notif");
+    }
+    }, [socket, activeTab === "notifications"]);
+
+    
 
     const tabs = [
         { id: "home" as TabType, label: "Home", icon: Home },
@@ -43,7 +58,6 @@ export default function ProfilePage() {
             case "notifications":
                 return <NotificationsTab />
             case "messages":
-                // case "messages/:userName":
                 return <MessagesTab />
             case "profile":
                 return <ProfileTab />
@@ -54,15 +68,13 @@ export default function ProfilePage() {
         }
     }
 
-    const { data: session } = useSession();
-    // console.log(session?.user?._id)
-    const router = useRouter();
 
-    // useEffect(() => {
-    //     if(!session?.user?._id){
-    //         // router.push("/login")
-    //     }
-    // }, [])
+    useEffect(() => {
+        if(!loading && !user?._id) router.push("/login")
+    }, [loading, user?._id])
+
+
+    if (loading) return <Loader />;
 
     return (
         <div className="min-h-screen">
@@ -82,7 +94,8 @@ export default function ProfilePage() {
                     <h1 className="text-2xl font-bold text-primary mb-8 ml-14 lg:ml-0">Dashboard</h1>
                     <nav className="space-y-2">
                         {tabs.map((tab) => {
-                            const IconComponent = tab.icon
+                            const IconComponent = tab.icon;
+                            const isNotification = tab.id === "notifications";
                             return (
                                 <button
                                 key={tab.id}
@@ -98,9 +111,16 @@ export default function ProfilePage() {
                                             setSidebarOpen(false)
                                         }
                                     }}
-                                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${activeTab === tab.id ? "bg-primary-500 text-white hover:bg-primary-600" : "hover:bg-primary-600 hover:text-white/95"
+                                    className={` w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${activeTab === tab.id ? "bg-primary-500 text-white hover:bg-primary-600" : "hover:bg-primary-600 hover:text-white/95"
                                         }`}>
-                                    <IconComponent className="w-5 h-5" />
+                                    <div className="relative">
+                                        <IconComponent className="w-6 h-6" />
+                                        {isNotification && unreadCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-red-500 font-semibold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                                                {unreadCount}
+                                            </span>
+                                        )}
+                                    </div>
                                     <span className="font-medium">{tab.label}</span>
                                 </button>
                             )

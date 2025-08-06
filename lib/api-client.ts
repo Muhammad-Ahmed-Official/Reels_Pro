@@ -300,6 +300,20 @@ class ApiClient{
         const res = await this.fetch<{data: ChatData}>("sidebar-users");
         return res.data;
     }
+
+
+    async getNotification(){
+        const res = await this.fetch<{data:NotificaitonData}>("notification");
+        return res.data;
+    };
+
+    
+    
+    async delNotification(id: string){
+        return this.fetch(`notification?id=${id}`, {
+            method: "DELETE",
+        });
+    };
     
 }
 

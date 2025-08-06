@@ -1,16 +1,16 @@
 import pkg from 'mongoose';
-const { model, models, Schema, Types } = pkg;
+const { model, models, Schema } = pkg;
 
 export interface INotification {
-    _id?: typeof Types.ObjectId;
+    _id?: string;
     typeNotification: "like" | "follow" | "comment" | "video";
-    sender: string;
-    recipient?: string;
+    // sender: string;
+    receiver: string;
     reelId?: string;
     isRead?: boolean;
-    msg: string;
+    message: string;
     // allFollower?: {};
-    createdAt: Date;
+    createdAt?: Date;
     updatedAt?: Date;
 }
 
@@ -22,7 +22,7 @@ const notificationSchema = new Schema<INotification>({
         required: true,
         
     },
-    sender: {
+    receiver: {
         type: String,
         required: true,
     },
@@ -30,7 +30,7 @@ const notificationSchema = new Schema<INotification>({
     //     type: String,
     //     required: true,
     // },
-    msg: {
+    message: {
         type: String,
         required: true,
     },

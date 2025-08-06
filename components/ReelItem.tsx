@@ -1,7 +1,7 @@
 "use client"
 
 import { apiClient, type PlaylistFormData, type VideoFormData } from "@/lib/api-client"
-import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Play, VolumeX, Volume2, X } from "lucide-react"
+import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Play, VolumeX, Volume2, X, Share2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import CommentModal from "./CommentModal"
 import Image from "next/image"
@@ -10,7 +10,8 @@ import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import { useSession } from "next-auth/react"
 import { useParams } from "next/navigation"
 import { useSocket } from "@/app/context/SocketContext"
-import { useUser } from "@/app/context/userContext"
+// import { useUser } from "@/app/context/userContext"
+import { getChannel } from "@/server/services/rabbitmq.js"
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) {
@@ -41,7 +42,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const commentButtonRef = useRef<HTMLButtonElement>(null)
 
   const { socket } = useSocket();
-  const { user } = useUser();
+  // const { user } = useUser();
 
 
   useEffect(() => {
@@ -72,15 +73,31 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     }
   }
 
+  const sendNotification = async(typeNotification:string, message:string) => {
+     const payload = {
+      receiver: reel.owner._id,
+      reelId: reel?._id,
+      message,
+      typeNotification,
+      createdAt: new Date(),
+    };
+    await fetch('http://localhost:3000/api/sendNotification', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  }
+
   const toggleLike = async() => {
     setIsLiked(!isLiked)
     await asyncHandlerFront(
         async() => {
             await apiClient.likeUnlikeVideo(reel?._id);
-            toast.success(isLiked ? "Video liked successfully" : "Video unliked successfully" )
+            toast.success(isLiked ? "Video liked successfully" : "Video unliked successfully");
+            sendNotification("like", isLiked ? "Video liked successfully" : "Video unliked successfully");
         }, 
         (error) => {
-          toast.error(error.message)
+          toast.error(error.message || "Something went wrong");
         }
     )
   }
@@ -92,6 +109,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
       async() => {
         await apiClient.saveVideo(id?.toString()!);
         toast.success(!isBookmarked ? "Video saved successfully" : "Video unsaved successfully");
+        // sendNotification("like", !isBookmarked ? "Video saved successfully" : "Video unsaved successfully");
       }, 
       (error) => {
         toast.error(error.message)
@@ -106,6 +124,19 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         async() => {
             await apiClient.follow(reel.owner._id as string);
             toast.success(!isFollowing ? "Follow successfully" : "Unfollow successfully");
+            sendNotification("follow", !isFollowing ? "Follow successfully" : "Unfollow successfully")
+            // const payload = {
+            //   receiver: reel.owner._id,
+            //   reelId: reel?._id,
+            //   message: !isFollowing ? "Follow's you" : "Unfollow's you",
+            //   typeNotification: "follow",
+            //   createdAt: new Date(),
+            // };
+            // await fetch('http://localhost:3000/api/sendNotification', {
+            //   method: "POST",
+            //   headers: { "Content-Type": "application/json" },
+            //   body: JSON.stringify(payload)
+            // });
         }, 
         (error) => {
             toast.error(error.message)
@@ -113,11 +144,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     )
   }
 
-//   sender: reel.owner._id,
-//   reelId: reel?._id,
-//   msg: !isFollowing ? "Follow's you" : "Unfollow's you",
-//   typeNotification: "follow",
-//   createdAt: new Date(),
 
 
   const handleCheckboxChange = async(isChecked: boolean, playlistId: string, videoId: string) => {
@@ -228,7 +254,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
               {/* Share */}
               <button className="flex flex-col items-center">
                 <div className="bg-black/50 rounded-full p-2 sm:p-3">
-                  <Share className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                  <Share2 className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                 </div>
                 {/* <span className="text-white text-xs sm:text-sm font-medium mt-1">{formatNumber(reel.shares)}</span> */}
               </button>

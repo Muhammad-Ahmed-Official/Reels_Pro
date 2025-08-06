@@ -1,6 +1,5 @@
 import { consumeNotifications } from '../Consumer/notificationConsumer.js';
 import { Chat } from '../Models/Chat.models.js';
-import { getChannel } from './rabbitmq.js';
 import { Server } from 'socket.io'
 
 export class SocketService {
@@ -19,17 +18,17 @@ export class SocketService {
     public async initListener(){
         const io = this.io;
         
-        // Start consumer ONCE
-        await consumeNotifications(io);
 
         io.on('connection', (socket) => {
             const userId = socket.handshake?.query?.userId as string;
-            // console.log(`Socket connected: ${socket.id} for user ${userId}`);
+            console.log(`Socket connected: ${socket.id} for user ${userId}`);
             if(userId && userId !== undefined){
                 this.userSocketMap.add(userId)
             }
             console.log("Online users:", Array.from(this.userSocketMap));
             io.emit("getOnlineUser", Array.from(this.userSocketMap));
+
+            
 
             socket.on("joinRoom", (chatId) => {
                 if (!socket.rooms.has(chatId)) {
@@ -42,6 +41,12 @@ export class SocketService {
                 socket.leave(chatId);
                 console.log(`User ${userId} left room ${chatId}`);
             });
+
+            // Start consumer ONCE
+
+            socket.on("notif", () => {
+                consumeNotifications(io);
+            })
 
 
             socket.on("message", async (data) => {

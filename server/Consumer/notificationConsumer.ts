@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { getChannel } from "../services/rabbitmq.js";
+import { Notification } from "../Models/Notification.model.js";
 
 export const consumeNotifications = async (io: Server) => {
   const channel = getChannel();
@@ -12,11 +13,14 @@ export const consumeNotifications = async (io: Server) => {
   channel.consume(queueName, async (msg:any) => {
     if (msg) {
       const notification = JSON.parse(msg.content.toString());
-      console.log(notification);
       const { receiver } = notification;
-
-      // Emit only if user is online
+      // console.log(notification)
       io.to(receiver).emit("notification", notification);
+      try {
+        await Notification.create(notification)
+      } catch (error) {
+        console.error("Message DB save failed:", error);
+      }
       channel.ack(msg);
     }
   });
