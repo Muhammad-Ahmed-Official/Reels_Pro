@@ -131,7 +131,13 @@ class ApiClient{
             method: "POST",
             body: { email },
         })
-    }
+    };
+
+
+    async getUsers(){
+        const response = await this.fetch<{data:User}>("user");
+        return response.data;
+    };
 
 
     async getUser(){

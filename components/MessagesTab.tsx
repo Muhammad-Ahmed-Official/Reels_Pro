@@ -448,8 +448,33 @@ const MessagesTab = () => {
                               </div>
                             ) : (
                               <>
-                                {msg.message}
-                                {isOwn && <CheckCheck size={18} className={`inline ml-2 ${msg?.seen && 'text-[#00a6ff]'}`} />}
+                              {/* <div className={`max-w-[70%] my-2 p-3 rounded-xl ${isOwn ? 'bg-blue-100 ml-auto' : 'bg-gray-100 mr-auto'} shadow-md`}> */}
+                                  {msg.video && (
+                                    <video
+                                      controls
+                                      className="rounded-lg max-w-64 mb-2">
+                                      <source src={msg.video} type="video/mp4" />
+                                      {/* Your browser does not support the video tag. */}
+                                    </video>
+                                  )}
+
+                                  {msg.image && (
+                                    <img src={msg.image} alt="Sent image"className="rounded-lg max-w-64 mb-2" />
+                                  )}
+
+                                  {/* Text */}
+                                  {msg.message && (
+                                    <p className=" text-sm whitespace-pre-line">
+                                      {msg.message}
+                                    </p>
+                                  )}
+
+                                  {isOwn && (
+                                    <div className="flex justify-end mt-1"> <CheckCheck size={16} className={`ml-1 ${msg.seen ? 'text-[#00a6ff]' : 'text-gray-400'}`} />
+                                    </div>
+                                  )}
+                                {/* </div> */}
+
                               </>
                             )}
 
@@ -493,13 +518,13 @@ const MessagesTab = () => {
 
                       </div>
 
-                      {isOwn && (
+                      {/* {isOwn && (
                         <img
                           src={activeUser?.profilePic}
                           alt="Avatar"
                           className="w-8 h-8 rounded-full object-cover border"
                         />
-                      )}
+                      )} */}
                     </div>
                   );
                 })}

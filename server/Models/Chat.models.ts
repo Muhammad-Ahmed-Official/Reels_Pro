@@ -7,6 +7,7 @@ export interface IChat {
     receiver: string;
     message: string;
     image?: string;
+    video?:string;
     createdAt?: Date;
     updatedAt?: Date;
     seen?: boolean;
@@ -26,9 +27,11 @@ const chatSchema = new Schema<IChat>({
     },
     message: {
         type: String,
-        required: true,
     },
     image: {
+        type: String,
+    },
+    video: {
         type: String,
     },
     seen: {

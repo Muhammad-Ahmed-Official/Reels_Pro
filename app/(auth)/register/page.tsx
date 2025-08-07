@@ -1,166 +1,61 @@
-// 'use client'
+'use client'
 
-// import { zodResolver } from "@hookform/resolvers/zod"
-// import { signUpSchema } from '@/schemas/signUpSchema';
-// import { useRouter } from 'next/navigation';
-// import React, { useEffect, useState } from 'react'
-// import { useForm } from 'react-hook-form';
-// import { z } from 'zod';
-// import axios, { AxiosError } from "axios";
-// import { ApiResponse } from "@/types/ApiResponse";
-// import toast from "react-hot-toast";
-// import Link from "next/link";
-// import { Loader, Loader2 } from "lucide-react";
-// import { apiClient } from "@/lib/api-client";
-// import { useDebounceCallback } from "usehooks-ts";
-
-// export default function Register() {
-//     const [isSubmitting, setIsSubmitting] = useState(false);
-//     const[userName, setUsername] = useState('');
-//     const[userNameMessage, setUserNameMessage] = useState('');
-//     const[isCheckingUsername, setIsCheckingUsername] = useState(false);
-//     const debounced = useDebounceCallback(setUsername, 300);
-//     const router = useRouter();
-
-//     const form = useForm<z.infer<typeof signUpSchema>>({
-//         resolver: zodResolver(signUpSchema),
-//         defaultValues: {
-//             userName: '',
-//             email: '',
-//             password: '',
-//         }
-//     });
-
-
-//     useEffect(() => {
-//         const checkUserNameUnique = async () => {
-//         if (userName) {
-//             setIsCheckingUsername(true);
-//             setUserNameMessage('');
-//             try {
-//                 const response = await axios.get(`/api/check-uni-uName?userName=${userName}`);
-//                     setUserNameMessage(response.data.message);
-//                     console.log(response)
-//                 } catch (error) {
-//                 const axiosError = error as AxiosError<ApiResponse>;
-//                     setUserNameMessage(axiosError.response?.data?.message ?? "Error checking userName");
-//                 } finally {
-//                     setIsCheckingUsername(false);
-//                 }
-//             }
-//         }
-
-//         checkUserNameUnique();
-//     }, [userName])
-
-
-//     const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
-//         setIsSubmitting(true);
-//         try {
-//             await apiClient.register(data);
-//             toast.success('Otp send to email');
-//             form.reset();
-//             router.push(`/verify/${userName}`);
-//         } catch (error) {
-//             const axiosError = error as AxiosError<ApiResponse>;
-//             let errorMsg = axiosError.response?.data.message;
-//             toast.error(errorMsg ?? "Something went wrong");
-//         } finally{
-//             setIsSubmitting(false);
-//         }
-//     }
-
-//   return (
-//     <div className="flex justify-center items-center h-[725px] md:h-[620px] px-4">
-//       <div className="max-w-md space-y-8 bg-base-200 border-base-300 shrink-0 shadow-2xl rounded-box w-sm border p-4">
-//         <div className="text-center">
-//           <h1 className="text-2xl font-bold">Welcome Back to Reels Pro</h1>
-//           <p className="mb-4">Register to continue watching Reels</p>
-//         </div>
-//         {/* <div className="flex gap-x-5 justify-center items-baseline-last mb-0">
-//             <div className="rounded shadow-xl px-4 py-[6.5px] bg-white cursor-pointer">
-//                 <img src="https://img.icons8.com/?size=25&id=17949&format=png&color=000000" alt="" />
-//             </div>
-//             <div className="rounded shadow-xl px-4 py-1 bg-white cursor-pointer">
-//                 <img src="https://img.icons8.com/?size=30&id=4Z2nCrz5iPY2&format=png&color=000000" alt="" />
-//             </div>
-//         </div> */}
-//         {/* <div className="flex items-center gap-4 text-gray-500 my-3">
-//             <hr className="flex-grow border-t border-gray-300" />
-//             <span className="text-sm">or</span>
-//             <hr className="flex-grow border-t border-gray-300" />
-//         </div> */}
-
-//         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-//             <fieldset className="fieldset mx-auto">
-
-//                 <label className="label">Username</label>
-//                 <input type="text" className="input outline-none" placeholder="Username" {...form.register("userName", {
-//                     onChange: (e) => {
-//                         debounced(e.target.value)
-//                     }
-//                 })} />
-//                 { isCheckingUsername && <Loader2 className="animate-spin" /> }
-//                 <p className={`text-sm ${userNameMessage === 'userName is available' ? 'text-green-500' : 'text-red-500'}`}>{userNameMessage}</p>
-//                 {form.formState.errors.userName && ( <p className="text-red-500 text-sm">{form.formState.errors.userName.message}</p>)}
-
-//                 <label className="label">Email</label>
-//                 <input type="email" className="input" placeholder="Email" {...form.register("email")} />
-//                 {form.formState.errors.email && ( <p className="text-red-500 text-sm">{form.formState.errors.email.message}</p>)}
-
-//                 <label className="label">Password</label>
-//                 <input type="password" className="input" placeholder="Password" {...form.register("password")}/>
-//                 {form.formState.errors.password && ( <p className="text-red-500 text-sm">{form.formState.errors.password.message}</p>)}
-
-//                 <button className="btn btn-neutral mt-4 w-xs" type="submit"  disabled={isSubmitting}> 
-//                     {isSubmitting ? ( <Loader2 size={25} className="mr-2 animate-spin" />)  : ('Register') }
-//                 </button>
-//             </fieldset>
-//         </form>
-//        <div className="text-center my-0">
-//           <p>
-//             Already have an account?{' '}
-//             <Link href="/login" className="">
-//               Login
-//             </Link>
-//           </p>
-//         </div>
-//        </div>
-//     </div>
-//   )
-// }
-
-
-
-
-
-"use client"
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useRef, useState } from 'react'
-import { asyncHandlerFront } from '@/utils/FrontAsyncHandler';
-import toast from 'react-hot-toast';
-import { apiClient } from '@/lib/api-client';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Play, Check, Heart, MessageCircle, Share, Bookmark } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { signUpSchema } from '@/schemas/signUpSchema';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Image from 'next/image';
 import { useDebounceCallback } from 'usehooks-ts';
 import axios, { AxiosError } from 'axios';
-import { ApiResponse } from '@/utils/ApiResponse';
+import toast from 'react-hot-toast';
+import { apiClient } from '@/lib/api-client';
+import { asyncHandlerFront } from '@/utils/FrontAsyncHandler';
 import FileUpload from '@/components/FileUplod';
+import { ApiResponse } from '@/utils/ApiResponse';
+import video from "../../../public/vertical-video-thumbnail.png"
+import Image from 'next/image';
 
-const RegisterPage = () => {
+const FloatingReelCard = ({ className, delay = 0 }: any) => (
+  <div 
+    className={`absolute bg-white rounded-2xl shadow-lg p-4 w-48 ${className}`}
+    style={{ animation: `float 6s ease-in-out infinite`, animationDelay: `${delay}s` }}
+  >
+    <div className="relative">
+        <Image
+            src={video}
+            alt="Reel thumbnail"
+            className="w-full h-32 object-cover rounded-xl"
+        />
+        <div className="absolute inset-0 bg-black/20 rounded-xl flex items-center justify-center">
+        <Play className="w-8 h-8 text-white fill-white" />
+      </div>
+      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">0:15</div>
+    </div>
+    <div className="mt-3 flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Heart className="w-4 h-4 text-red-500" />
+        <span className="text-sm text-gray-600">2.4K</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <MessageCircle className="w-4 h-4 text-gray-400" />
+        <Share className="w-4 h-4 text-gray-400" />
+        <Bookmark className="w-4 h-4 text-gray-400" />
+      </div>
+    </div>
+  </div>
+);
 
-    const [showPassword, setShowPassword] = useState(false);
-    const router = useRouter();
+export default function RegisterPage() {
+  const [showPassword, setShowPassword] = useState(false);
+  const [userName, setUsername] = useState('');
+  const [userNameMessage, setUserNameMessage] = useState('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const router = useRouter();
 
-    const[userName, setUsername] = useState('');
-    const[userNameMessage, setUserNameMessage] = useState('');
-    const[isCheckingUsername, setIsCheckingUsername] = useState(false);
-    const debounced = useDebounceCallback(setUsername, 300);
+  const debounced = useDebounceCallback(setUsername, 300);
 
     useEffect(() => {
         const checkUserNameUnique = async () => {
@@ -181,7 +76,6 @@ const RegisterPage = () => {
 
         checkUserNameUnique();
     }, [userName])
-
 
     const { handleSubmit, reset, register, formState:{isSubmitting, errors}, setValue, watch } = useForm<z.infer<typeof signUpSchema>>({
         resolver: zodResolver(signUpSchema),
@@ -208,96 +102,177 @@ const RegisterPage = () => {
         )
     };
 
+  return (
+    <div className="h-screen w-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative">
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-purple-300 to-pink-300 rounded-full blur-xl opacity-30 animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-72 h-72 bg-gradient-to-r from-blue-300 to-indigo-300 rounded-full blur-xl opacity-30 animate-pulse"></div>
+        <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full blur-xl opacity-30 animate-pulse"></div>
+        <FloatingReelCard className="top-16 left-16 opacity-60" delay={0} />
+        <FloatingReelCard className="top-32 right-20 opacity-50" delay={2} />
+        <FloatingReelCard className="bottom-32 left-20 opacity-40" delay={4} />
+        <FloatingReelCard className="bottom-16 right-32 opacity-60" delay={1} />
+        <FloatingReelCard className="top-1/2 left-8 opacity-30" delay={3} />
+        <FloatingReelCard className="top-1/3 right-8 opacity-40" delay={5} />
 
-    return (
-        <div className='min-h-screen flex'>
-            <div className="w-full lg:w-1/2 flex flex-col items-center justify-center px-6 lg:px-16 xl:px-24">
-                <div className="w-full max-w-sm">
-                    <div className="flex items-center gap-2 mb-8">
-                        <span className="text-xl font-semibold">
-                        <span className="text-primary-400">Reels</span>_
-                        <span className="text-primary-400">Pro</span>
-                        </span>
+        <div className="absolute top-20 right-[460px] animate-ping opacity-20">
+        <div className="w-14 h-14 bg-indigo-500 rounded-full flex items-center justify-center">
+            <Play className="w-8 h-8 text-white fill-white ml-1" />
+        </div>
+        </div>
+        <div className="absolute bottom-40 left-[460] animate-ping opacity-20" style={{ animationDelay: '2s' }}>
+        <div className="w-14 h-14 bg-purple-500 rounded-full flex items-center justify-center">
+            <Play className="w-8 h-8 text-white fill-white ml-1" />
+        </div>
+        </div>
+
+        <div className="absolute top-1/4 left-[480px] animate-bounce" style={{ animationDelay: '1s' }}>
+          <div className="w-12 h-12 bg-gradient-to-r from-pink-400 to-red-400 rounded-full flex items-center justify-center shadow-lg opacity-70">
+            <Heart className="w-6 h-6 text-white" />
+          </div>
+        </div>
+        <div className="absolute top-3/4 right-[485px] animate-bounce" style={{ animationDelay: '3s' }}>
+          <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center shadow-lg opacity-70">
+            <Share className="w-6 h-6 text-white" />
+          </div>
+        </div>
+      </div>
+
+      <div className="relative z-10 h-auto flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-4 shadow-2xl border border-white/50">
+          <div className="text-center mb-2">
+                {/* Logo */}
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <div className="relative">
+                    <div className="w-[55px] h-[55px] bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl transform rotate-3 hover:rotate-6 transition-transform duration-300">
+                      <Play className="w-8 h-8 text-white fill-white" />
                     </div>
-                    <h1 className="text-2xl font-semibold text-primary-400 mb-8">Register</h1>
-                    
-                    <FileUpload fileType='image' onSuccess={(res) => setValue("profilePic", res.url)} />
-                    { watch("profilePic") &&
-                    (
-                        <img
-                            src={watch("profilePic")}
-                            alt="Preview"
-                            className="cursor-pointer mb-2 inline-block size-15 rounded-full ring-2 ring-white"
-                        />
-                    ) }
-
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                        <div>
-                            <input type="text" placeholder="Username" 
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
-                                {...register("userName", {
-                                    onChange: (e) => { debounced(e.target.value) }
-                                })}
-                            />
-                            { isCheckingUsername && <Loader2 className="animate-spin mt-1" /> }
-                            <p className={`text-sm mt-1 ${userNameMessage === 'userName is available' ? 'text-green-500' : 'text-red-500'}`}>{userNameMessage}</p>
-                            {errors.userName && ( <p className="mt-1 text-sm text-red-600">{errors.userName.message}</p>)}
-                        </div>
-                        <div>
-                            <input type="email" placeholder="Email" {...register("email")}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
-                            />
-                            {errors.email && ( <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>)}
-                        </div>
-
-                        <div className="relative">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Password" {...register("password")}
-                            className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary-400 focus:border-transparent outline-none transition"
-                            {...errors.password && ( <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>)}
-                        />
-                        <button type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
-                            { showPassword ? ( <EyeOff className="w-5 h-5 cursor-pointer" /> ) : 
-                            ( <Eye className="w-5 h-5 cursor-pointer" /> )}
-                        </button>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                        <button
-                            type="submit"
-                            className="px-8 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg cursor-pointer transition">
-                            { isSubmitting ? ( <Loader2 className="size-7 animate-spin" />) : ("Join now") }
-                        </button>
-                        <p className="text-sm"> <Link href="/forgot">Forgot password?</Link> </p>
-                        </div>
-                    </form>
-
-                    <p className="mt-8 text-center text-sm text-gray-600"> Already have an account?{' '}
-                    <span className="text-primary-500 hover:text-primary-600 font-medium"><Link href="/login"> Log in</Link> </span> 
-                    </p>
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full animate-bounce">
+                      <div className="absolute inset-1 bg-white rounded-full"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-black text-black">
+                      Reels<span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Pro</span>
+                    </h1>
+                  </div>
                 </div>
+                
+                <h2 className="text-2xl font-bold text-black mb-1">Create Your Account</h2>
+                <p className="text-gray-300">Join millions of creators worldwide</p>
+              </div>
+
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <FileUpload fileType="image" onSuccess={(res) => setValue('profilePic', res.url)} />
+                {watch('profilePic') && (
+                  <img src={watch('profilePic')} alt="Preview" className="absolute inset-0 w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg" />
+                )}
+              </div>
             </div>
 
-            {/* Right side - Welcome Message */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-                <div className="absolute inset-0 bg-primary-800">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557683311-eac922347aa1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1080&q=80')] opacity-20 mix-blend-overlay"></div>
+                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+                <div className="space-y-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="@your_username"
+                      className="w-full px-4 py-2 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 bg-white shadow-sm hover:shadow-md text-[16px]"
+                      {...register('userName', { onChange: (e) => debounced(e.target.value) })}
+                    />
+                    {isCheckingUsername && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-5 h-5 animate-spin text-purple-400" />
+                      </div>
+                    )}
+                  </div>
+                  {userNameMessage && (
+                    <div className="flex items-center gap-2">
+                      {userNameMessage === 'userName is available' && (
+                        <Check className="w-4 h-4 text-green-400" />
+                      )}
+                      <p className={`text-sm ${userNameMessage === 'userName is available' ? 'text-green-400' : 'text-red-400'}`}>
+                        {userNameMessage}
+                      </p>
+                      {errors.userName && ( <p className="mt-1 text-sm text-red-600">{errors.userName.message}</p>)}
+                    </div>
+                  )}
                 </div>
-                <div className="relative w-full flex items-center justify-center p-16">
-                <div className="text-primary-100 max-w-md">
-                    <h2 className="text-4xl font-bold mb-6">10,000+ clients are getting more replies!</h2>
-                    <p className="text-lg text-primary-100">
-                    Unlock the power of effective outreach with our cutting-edge platform, 
-                    and experience a surge in responses and engagement rates like never before.
-                    </p>
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    className="w-full px-4 py-2 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 bg-white shadow-sm hover:shadow-md text-[16px]"
+                    {...register('email')}
+                  />
+                   {errors.email && ( <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>)}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Create password"
+                      className="w-full px-4 py-2 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 bg-white shadow-sm hover:shadow-md text-[16px]"
+                      {...register('password')}
+                    />
+                    {errors.password && ( <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>)}
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)} 
+                      className="curaor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-500 focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" disabled={isSubmitting} className="cursor-pointer w-full py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-[16px]">
+                    {isSubmitting ? <div className="flex justify-center gap-3"><Loader2 className="w-6 h-6 animate-spin" />Creating your account...</div> : 'Start Creating Amazing Reels'}
+                </button>
+              </form>
+
+
+            <div className="mt-4 space-y-2 text-center">
+              
+              <div className="border-t border-gray-200 pt-3">
+                <p className="text-gray-600">Already have an account? <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-bold">Sign in</Link></p>
+              </div>
+            </div>
+            </div>
+            <div className="mt-4 text-center">
+                <p className="text-gray-600 text-sm mb-2">Join thousands of creators worldwide</p>
+                <div className="flex justify-center gap-8">
+                <div>
+                    <div className="text-xl font-bold text-gray-900">50K+</div>
+                    <div className="text-sm text-gray-600">Creators</div>
+                </div>
+                <div>
+                    <div className="text-xl font-bold text-gray-900">2M+</div>
+                    <div className="text-sm text-gray-600">Reels</div>
+                </div>
+                <div>
+                    <div className="text-xl font-bold text-gray-900">100M+</div>
+                    <div className="text-sm text-gray-600">Views</div>
                 </div>
                 </div>
             </div>
         </div>
-    )
-}
+      </div>
 
-export default RegisterPage
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-10px) rotate(1deg); }
+          50% { transform: translateY(-5px) rotate(-1deg); }
+          75% { transform: translateY(-15px) rotate(0.5deg); }
+        }
+      `}</style>
+    </div>
+  );
+}

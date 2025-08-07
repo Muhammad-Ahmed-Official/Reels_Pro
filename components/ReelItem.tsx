@@ -12,6 +12,9 @@ import { useParams } from "next/navigation"
 import { useSocket } from "@/app/context/SocketContext"
 // import { useUser } from "@/app/context/userContext"
 import { getChannel } from "@/server/services/rabbitmq.js"
+import { fa } from "zod/v4/locales"
+import { User } from "@/models/User"
+import { useUser } from "@/app/context/userContext"
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) {
@@ -34,6 +37,8 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const [isFollowing, setIsFollowing] = useState(reel?.isFollow);
   const { id } = useParams();
   const { data: session } = useSession();
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [users, setUsers] = useState<User[]>([]);
   // const [openSaveModal, setOpenSaveModal] = useState(false);
   // const [playlistName, setPlaylistName] = useState<PlaylistFormData[]>([]);
   // const [likes, setLikes] = useState(reel.likes)
@@ -42,7 +47,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const commentButtonRef = useRef<HTMLButtonElement>(null)
 
   const { socket } = useSocket();
-  // const { user } = useUser();
+  const { user } = useUser();
 
 
   useEffect(() => {
@@ -125,24 +130,54 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
             await apiClient.follow(reel.owner._id as string);
             toast.success(!isFollowing ? "Follow successfully" : "Unfollow successfully");
             sendNotification("follow", !isFollowing ? "Follow successfully" : "Unfollow successfully")
-            // const payload = {
-            //   receiver: reel.owner._id,
-            //   reelId: reel?._id,
-            //   message: !isFollowing ? "Follow's you" : "Unfollow's you",
-            //   typeNotification: "follow",
-            //   createdAt: new Date(),
-            // };
-            // await fetch('http://localhost:3000/api/sendNotification', {
-            //   method: "POST",
-            //   headers: { "Content-Type": "application/json" },
-            //   body: JSON.stringify(payload)
-            // });
         }, 
         (error) => {
-            toast.error(error.message)
+          toast.error(error.message)
         }
     )
   }
+
+
+  
+  useEffect(() => {
+    const getAllUser = async() => {
+      await asyncHandlerFront(
+        async() => {
+          const response = await apiClient.getUsers();
+          setUsers(response as any);
+        },
+        (error) => {
+          toast.error(error.message)
+        }
+      )
+    };
+
+    getAllUser()
+  }, [])
+
+
+  const handleSelect = async(id:string, video:string) => {
+    const payload = {
+      sender: user?._id,
+      receiver: id,
+      video, 
+    }
+    
+    if(!user?._id || !id || !video) {
+      toast.error("Missing fields!");
+      return;
+    } 
+
+    if(user?._id === id) {
+      toast.error("Can't share your self");
+      return
+    }
+
+    socket?.emit("reel", payload);
+    setShowModal(false);
+    toast.success("Reel shared");
+  }
+
 
 
 
@@ -228,12 +263,9 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                   {isFollowing ? "Following" : "Follow" }
                 </button>}
               </div>
-
-              {/* Description */}
               <p className="text-white text-sm sm:text-base leading-relaxed mb-2">{reel.description}</p>
             </div>
 
-            {/* Right Actions */}
             <div className="flex flex-col items-center space-y-4 sm:space-y-6">
               {/* Like */}
               <button onClick={toggleLike} className="flex flex-col items-center cursor-pointer">
@@ -252,9 +284,9 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
               </button>
 
               {/* Share */}
-              <button className="flex flex-col items-center">
+              <button  onClick={() => setShowModal(!showModal)} className="flex flex-col items-center">
                 <div className="bg-black/50 rounded-full p-2 sm:p-3">
-                  <Share2 className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                  <Share2 className="w-6 h-6 sm:w-7 sm:h-7 text-white cursor-pointer" />
                 </div>
                 {/* <span className="text-white text-xs sm:text-sm font-medium mt-1">{formatNumber(reel.shares)}</span> */}
               </button>
@@ -267,6 +299,27 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                   />
                 </div>
               </button>
+
+              {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 ease-in-out">
+                  <div className="bg-white w-full max-w-md mx-auto rounded-2xl p-4 shadow-lg animate-slide-up">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-lg font-semibold">Share To</h2>
+                      <button className="cursor-pointer hover:bg-gray-200 p-1 rounded-full" onClick={() => setShowModal(false)}><X size={15} /></button>
+                    </div>
+
+                    <div className="space-y-3 max-h-72 overflow-y-auto">
+                      {users.map((user) => (
+                        <div onClick={() => handleSelect(user?._id as any, reel?.videoUrl)} key={user?.profilePic} className="flex items-center gap-3 hover:bg-gray-100 p-2 rounded-lg cursor-pointer">
+                          <img src={user.profilePic} alt={user.userName} className="w-10 h-10 rounded-full object-cover" />
+                          <span className="font-medium">{user.userName}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
 
               {/* { openSaveModal && (
                   <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50 p-4">

@@ -4,6 +4,7 @@ import { asyncHandlerFront } from "@/utils/FrontAsyncHandler";
 import { Loader2, Trash2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import Loader from "./Loader";
 
 export default function WatchLaterTab({ collectionModalOpen, setCollectionModalOpen }: {
   collectionModalOpen: boolean;
@@ -25,12 +26,12 @@ export default function WatchLaterTab({ collectionModalOpen, setCollectionModalO
         },
         (error) => toast.error(error.message)
       )
+      setLoading(false);
     }
     getSavedVideo();
-    setLoading(false);
   }, []);
 
-  console.log(savedVideo);
+  // console.log(savedVideo);
 
   const handleDelete = async () => {
     await asyncHandlerFront(
@@ -70,9 +71,8 @@ export default function WatchLaterTab({ collectionModalOpen, setCollectionModalO
         </div>
 
         {/* Video grid */}
-        {loading ? (
-          <p className="text-center text-primary-700 dark:text-gray-300"><Loader2 size={20} /></p>
-        ) : savedVideo[0]?.videos?.length ? (
+        {loading ? ( <Loader /> ) 
+        : savedVideo[0]?.videos?.length ? (
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto">
             {savedVideo[0].videos.map((video: any) => (
               <div

@@ -113,6 +113,15 @@ export class SocketService {
                 }
             });
 
+
+            socket?.on("reel", async(data) => {
+                try {
+                    await Chat.create(data)
+                } catch (error: any) {
+                   console.error("Message DB save failed:", error.message);
+                }
+            });
+
             
             socket.on("disconnect", () => {
                 console.log(`Client disconnected: ${socket.id} for user ${userId}`);

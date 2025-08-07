@@ -21,23 +21,23 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
             ]
         }
     },
-    {
-        $addFields: {
-        otherUser: {
-            $cond: [
-            { $eq: ["$sender", new mongoose.Types.ObjectId(token._id)] },
-            "$receiver",
-            "$sender"
-            ]
-        }
-        }
-    },
+    // {
+    //     $addFields: {
+    //     otherUser: {
+    //         $cond: [
+    //         { $eq: ["$sender", new mongoose.Types.ObjectId(token._id)] },
+    //         "$receiver",
+    //         "$sender"
+    //         ]
+    //     }
+    //     }
+    // },
     {
         $lookup: {
-        from: "users",
-        localField: "otherUser",
-        foreignField: "_id",
-        as: "user"
+            from: "users",
+            localField: "sender",
+            foreignField: "_id",
+            as: "user"
         }
     },
     // { $unwind: "$user" },
