@@ -75,7 +75,7 @@
 
 
 
-import { CheckCheck, ChevronDown, MessageCircleX, MessageSquare, Send, Trash, Trash2, UserRoundPen, X} from "lucide-react";
+import { Check, CheckCheck, ChevronDown, MessageCircleX, MessageSquare, Send, Trash, Trash2, UserRoundPen, X} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import FileUpload from "./FileUplod";
@@ -313,7 +313,7 @@ const MessagesTab = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
         {/* Sidebar */}
         <div className="lg:col-span-1">
-          <div className="card shadow-xl h-full dark:bg-black/90 bg-primary-50 overflow-y-auto">
+          <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-md border border-gray-200 h-full overflow-y-auto">
             <div className="card-body">
               <h3 className="card-title mb-4">Conversations</h3>
               <div className="relative w-full mb-4">
@@ -322,7 +322,7 @@ const MessagesTab = () => {
                   value={search as string}
                   onChange={(e) =>{ debounced(e.target.value), setSearch(e.target.value);}}
                   placeholder="Search a user..."
-                  className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                  className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition"
                 />
                 {search && (
                   <button
@@ -339,10 +339,10 @@ const MessagesTab = () => {
                 {users?.map((name:any) => (
                   <div
                     key={name}
-                    className={`flex items-center space-x-3 p-2 rounded cursor-pointer hover:bg-primary-500 hover:text-white ${
+                    className={`flex items-center space-x-3 p-2 rounded-xl cursor-pointer transition-all ${
                       activeUser === name
-                        ? "bg-primary-500 text-white"
-                        : "dark:hover:bg-primary-600"
+                        ? "bg-gradient-to-r from-purple-400 to-pink-400 text-white shadow-md"
+                        : "hover:bg-white/60 hover:shadow-sm"
                     }`}
                     onClick={() => {
                       setActiveUser({...activeUser, userName: name?.userName, profilePic: name.profilePic, _id: name?._id});
@@ -355,7 +355,7 @@ const MessagesTab = () => {
                         alt="profilePic"
                         width={40}
                         height={40}
-                        className="object-cover w-full h-full rounded-full"
+                        className="object-cover w-full h-full rounded-full border border-gray-200"
                       />
                       {onlineUsers?.includes(name._id) && (
                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-1 border-white rounded-full" />
@@ -376,9 +376,9 @@ const MessagesTab = () => {
 
         {/* Chat Area */}
         <div className="lg:col-span-2">
-          <div className="card shadow-xl h-full dark:bg-black/90 bg-primary-50 flex flex-col">
-          {activeUser?.userName && <div className="p-2.5 border-b border-base-300">
-            <div className="flex items-center justify-between">
+          <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-md border border-gray-200 h-full flex flex-col">
+          {activeUser?.userName && <div className="p-3 border-b border-gray-200 flex items-center justify-between">
+            <div className="w-full flex items-center justify-between">
               <div className="flex items-center gap-x-3">
                 <div className="avatar">
                     <div className="avatar placeholder w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
@@ -388,18 +388,18 @@ const MessagesTab = () => {
 
                 <div>
                   <h3 className="font-medium">{activeUser.userName.charAt(0).toUpperCase() + activeUser.userName.slice(1)}</h3>
-                  <p className="text-sm text-base-content/70">
+                  <p className="text-sm text-gray-500">
                     {onlineUsers?.includes(activeUser?._id)? "Online" : "Offline"}
                   </p>
                 </div>
               </div>
-
+              
               <button onClick={() => {
-                socket?.emit("leaveRoom", activeUser?._id);
-                socket?.off("seenMsg", activeUser?._id as any);
-                setActiveUser({ _id: "", userName: "", profilePic: "" });
-              }}
-              className='cursor-pointer'> <MessageCircleX /> </button>
+                  socket?.emit("leaveRoom", activeUser?._id);
+                  socket?.off("seenMsg", activeUser?._id as any);
+                  setActiveUser({ _id: "", userName: "", profilePic: "" });
+                }} className='cursor-pointer'> <MessageCircleX /> 
+              </button>
             </div>
           </div>}
             <div className="card-body flex flex-col h-full">
@@ -410,9 +410,7 @@ const MessagesTab = () => {
                   return (
                     <div
                       key={i}
-                      className={`flex items-end gap-2 group ${
-                        isOwn ? "justify-end" : "justify-start"
-                      }`}>
+                      className={`flex items-end gap-2 group ${ isOwn ? "justify-end" : "justify-start"}`}>
 
                       {/* {!isOwn? <img
                         src={activeUser?.profilePic}
@@ -424,8 +422,8 @@ const MessagesTab = () => {
                         <div
                             className={`px-3 pt-2 rounded-xl text-sm shadow-md break-words flex ${
                               isOwn
-                                ? "bg-primary-500 text-white rounded-br-none"
-                                : "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-none"
+                              ? "bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-br-none"
+                              : "bg-gray-100 text-gray-800 rounded-bl-none"
                             }`}>
                             
                             {editingMessageId === msg._id ? (
@@ -443,18 +441,24 @@ const MessagesTab = () => {
                                     handleUpdate(msg._id, editedText);
                                   }}
                                   className="text-xs px-1.5 py-1 mb-0.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-                                  Update
+                                  <Check />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    console.log('Save edited message:', editedText);
+                                    handleUpdate(msg._id, editedText);
+                                  }}
+                                  className="text-xs px-1.5 py-1 mb-0.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
+                                  <X />
                                 </button>
                               </div>
                             ) : (
                               <>
-                              {/* <div className={`max-w-[70%] my-2 p-3 rounded-xl ${isOwn ? 'bg-blue-100 ml-auto' : 'bg-gray-100 mr-auto'} shadow-md`}> */}
                                   {msg.video && (
                                     <video
                                       controls
                                       className="rounded-lg max-w-64 mb-2">
                                       <source src={msg.video} type="video/mp4" />
-                                      {/* Your browser does not support the video tag. */}
                                     </video>
                                   )}
 
@@ -473,8 +477,6 @@ const MessagesTab = () => {
                                     <div className="flex justify-end mt-1"> <CheckCheck size={16} className={`ml-1 ${msg.seen ? 'text-[#00a6ff]' : 'text-gray-400'}`} />
                                     </div>
                                   )}
-                                {/* </div> */}
-
                               </>
                             )}
 
@@ -580,9 +582,9 @@ const MessagesTab = () => {
                       handleTyping()
                     }}
                     placeholder="Type a message..."
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition"
                     />
-                  <button onClick={handleSendMessage} className="bg-primary-500 text-white p-2 my-0.5 rounded-full cursor-pointer">
+                  <button onClick={handleSendMessage} className="bg-gradient-to-r from-purple-400 to-pink-400 text-white p-2 rounded-full shadow hover:shadow-lg transition">
                     <Send size={19} />
                   </button>
                   <FileUpload

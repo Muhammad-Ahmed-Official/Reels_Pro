@@ -79,34 +79,39 @@ import { useRouter } from "next/navigation";
       <button
         onClick={() => {
           socket?.emit("leaveRoom", user?._id);
-           window.location.href = "/";
+          window.location.href = "/";
         }}
-        className="absolute right-6 top-6 text-gray-500 cursor-pointer transition"
-        title="Close notifications">
-        <X className="w-5 h-5" />
+        className="absolute right-6 top-6 text-gray-500 hover:text-gray-700 transition-colors"
+        title="Close notifications"> <X className="w-5 h-5" />
       </button>
-      <h2 className="text-2xl font-bold mb-4 ml-14 lg:ml-0">Notifications</h2>
+
+      <h2 className="text-2xl font-bold mb-6 ml-14 lg:ml-0 text-gray-800"> Notifications </h2>
       <div className="space-y-4">
-        { loading ? 
-          <Loader />  :
-         notifications.length > 0 ?  notifications?.map((notification) => (
-          <div key={notification?._id || notification?.typeNotification} className="group relative shadow-sm hover:shadow-md transition alert flex gap-2 items-center">
-            <Bell className="w-5 h-5" />
+        { loading ? ( <Loader />) : notifications.length > 0 ? (
+          notifications.map((notification) => (
+            <div key={notification?._id || notification?.typeNotification}
+              className="group relative flex items-center gap-3 p-4 rounded-xl backdrop-blur-md bg-white/50 hover:bg-white/70 border border-white/40 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="flex-shrink-0 p-2 rounded-lg bg-gradient-to-br from-pink-300 to-purple-300 text-white shadow-md"> 
+              <Bell className="w-5 h-5" /> </div>
+
               <div className="flex-1">
-                  <div className="font-bold">{notification.message}</div>
-                  <div className="text-xs opacity-70">{timeAgo(notification?.createdAt as any)}</div>
+                <div className="font-semibold text-gray-800"> {notification.message} </div>
+                <div className="text-xs text-gray-500"> {timeAgo(notification?.createdAt as any)} </div>
               </div>
-            <button
-              onClick={() => handleDelete(notification?._id as string)}
-              className="cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-gray-400 hover:text-red-500"
-              title="Delete notification"> <Trash2 className="w-5 h-5" />
-            </button>
-          </div>
-          )) : 
-          <div>No Notification found</div>
-        }
-        </div>
+
+              <button
+                onClick={() => handleDelete(notification?._id as string)}
+                className="cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-gray-400 hover:text-red-500"
+                title="Delete notification"> <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          ))
+        ) : (
+          <div className="text-gray-500 text-sm">No Notification found</div>
+        )}
       </div>
+    </div>
+
   )
 }
 

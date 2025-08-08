@@ -11,13 +11,13 @@ import mongoose from "mongoose";
 
 
 export const GET = asyncHandler(async (request:NextRequest): Promise<NextResponse> => {
-    await connectionToDatabase();
-
     const token = await getToken({ req: request });
     if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
 
-    const userId = new mongoose.Types.ObjectId(token._id);
+    await connectionToDatabase();
 
+    const userId = new mongoose.Types.ObjectId(token._id);
+    console.log(userId);
     const [postCount, followerCount, followingCount, currentUser] = await Promise.all([
         Video.countDocuments({ user: userId }),
         Follow.countDocuments({ following: userId }),
@@ -33,10 +33,11 @@ export const GET = asyncHandler(async (request:NextRequest): Promise<NextRespons
 
 
 export const POST = asyncHandler(async (request:NextRequest): Promise<NextResponse> => {
-    await connectionToDatabase();
-
+    
     const token = await getToken({ req: request });
     if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
+    
+    await connectionToDatabase();
 
     const { userName, email } = await request.json();
     if(!userName || !email ) return nextError(400, "Missing field");

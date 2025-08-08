@@ -78,66 +78,100 @@ export default function ProfilePage() {
 
     return (
         <div className="min-h-screen">
-            {/* Mobile menu button */}
             <div className="lg:hidden fixed top-4 left-4 z-50">
                 <button onClick={() => setSidebarOpen(!sidebarOpen)} className="btn btn-square btn-primary">
                     {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
             </div>
 
-            {/* Sidebar */}
             <div
-                className={`fixed inset-y-0 left-0 z-40 w-64 bg-black/100 text-white/80 lg:text-black lg:bg-primary-50 dark:bg-black/100 dark:text-white/80 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
-                    }`}
-            >
-                <div className="p-6">
-                    <h1 className="text-2xl font-bold text-primary mb-8 ml-14 lg:ml-0">Dashboard</h1>
-                    <nav className="space-y-2">
-                        {tabs.map((tab) => {
-                            const IconComponent = tab.icon;
-                            const isNotification = tab.id === "notifications";
-                            return (
-                                <button
-                                key={tab.id}
-                                    onClick={() => {
-                                        if (tab.id === "create") {
-                                            setIsCreateModalOpen(true)
-                                        } else if (tab.id === "logout"){
-                                            signOut({ callbackUrl: "/login" });
-                                        } else if (tab.id === "watchLater") {
-                                            setCollectionModalOpen(!collectionModalOpen);
-                                        } else {
-                                            setActiveTab(tab.id)
-                                            setSidebarOpen(false)
-                                        }
-                                    }}
-                                    className={` w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${activeTab === tab.id ? "bg-primary-500 text-white hover:bg-primary-600" : "hover:bg-primary-600 hover:text-white/95"
-                                        }`}>
-                                    <div className="relative">
-                                        <IconComponent className="w-6 h-6" />
-                                        {isNotification && unreadCount > 0 && (
-                                            <span className="absolute -top-1 -right-1 bg-red-500 font-semibold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-                                                {unreadCount}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <span className="font-medium">{tab.label}</span>
-                                </button>
-                            )
-                        })}
-                    </nav>
+            className={`fixed inset-y-0 left-0 z-40 w-64 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 
+                ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+            <div className="absolute inset-0 -z-10">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
+                <div className="pointer-events-none absolute inset-0 mix-blend-multiply">
+                <div className="absolute top-[-10%] left-[10%] h-[20vmax] w-[20vmax] rounded-full bg-gradient-to-br from-fuchsia-300 via-pink-300 to-purple-300 opacity-30 blur-3xl animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[5%] h-[18vmax] w-[18vmax] rounded-full bg-gradient-to-br from-indigo-300 via-sky-300 to-blue-300 opacity-30 blur-3xl animate-pulse" />
+                <div className="absolute top-[50%] left-[40%] h-[14vmax] w-[14vmax] rounded-full bg-gradient-to-br from-violet-200 to-pink-200 opacity-40 blur-2xl animate-pulse" />
                 </div>
+                <div className="absolute inset-0 opacity-[0.07] [background-image:radial-gradient(transparent_0,transparent_70%,rgba(0,0,0,0.25)_70%)] [background-size:3px_3px]" />
+            </div>
+
+            <div className="relative p-6 text-gray-800">
+                <h1 className="text-2xl font-extrabold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent mb-8 ml-14 lg:ml-0"> Dashboard </h1>
+                <nav className="space-y-2">
+                {tabs.map((tab) => {
+                    const IconComponent = tab.icon;
+                    const isNotification = tab.id === "notifications";
+                    const isActive = activeTab === tab.id;
+
+                    return (
+                    <button
+                        key={tab.id}
+                        onClick={() => {
+                        if (tab.id === "create") {
+                            setIsCreateModalOpen(true);
+                        } else if (tab.id === "logout") {
+                            signOut({ callbackUrl: "/login" });
+                        } else if (tab.id === "watchLater") {
+                            setCollectionModalOpen(!collectionModalOpen);
+                        } else {
+                            setActiveTab(tab.id);
+                            setSidebarOpen(false);
+                        }
+                        }}
+                        className={`cursor-pointer w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 
+                        ${
+                            isActive
+                            ? "bg-gradient-to-r from-purple-200 to-pink-200 text-purple-800 shadow-md shadow-pink-100"
+                            : "bg-white/60 hover:bg-white/80 text-gray-700 hover:text-purple-600"
+                        }`}>
+                        <div className="relative">
+                        <IconComponent
+                            className={`w-6 h-6 ${isActive ? "text-white" : "text-purple-600"}`}
+                        />
+                        {isNotification && unreadCount > 0 && (
+                            <span className="absolute -top-1 -right-1 bg-red-500 font-semibold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                            {unreadCount}
+                            </span>
+                        )}
+                        </div>
+                        <span className="font-medium">{tab.label}</span>
+                    </button>
+                    );
+                })}
+                </nav>
+            </div>
             </div>
 
             {/* Overlay for mobile */}
             {sidebarOpen && (
-                <div className="fixed inset-0 bg-black/50 bg-opacity-50 z-30 lg:hidden text-white" onClick={() => setSidebarOpen(false)} />
+            <div
+                className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+            />
             )}
 
-            {/* Main content */}
-            <div className="lg:ml-64">
-                <main className="min-h-screen dark:bg-black/80 dark:text-white/70">{renderTabContent()}</main>
-            </div>
+
+
+            <main className="lg:ml-64">
+                <div className="fixed inset-0 -z-10">
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
+                    <div className="pointer-events-none absolute inset-0 mix-blend-multiply">
+                    <div className="absolute top-[-10%] left-[10%] h-[40vmax] w-[40vmax] rounded-full bg-gradient-to-br from-fuchsia-300 via-pink-300 to-purple-300 opacity-30 blur-3xl animate-pulse" />
+                    <div className="absolute bottom-[-10%] right-[5%] h-[36vmax] w-[36vmax] rounded-full bg-gradient-to-br from-indigo-300 via-sky-300 to-blue-300 opacity-30 blur-3xl animate-pulse" />
+                    <div className="absolute top-[30%] left-[55%] h-[28vmax] w-[28vmax] rounded-full bg-gradient-to-br from-violet-200 to-pink-200 opacity-40 blur-2xl animate-pulse" />
+                    </div>
+                    <div className="absolute inset-0 opacity-[0.07] [background-image:radial-gradient(transparent_0,transparent_70%,rgba(0,0,0,0.3)_70%)] [background-size:3px_3px]" />
+                </div>
+
+                <div className="relative z-10">
+                    <main className="min-h-screen bg-transparent">
+                    {renderTabContent()}
+                    </main>
+                </div>
+            </main>
+
 
             <CreateTab
                 isModalOpen={isCreateModalOpen}
