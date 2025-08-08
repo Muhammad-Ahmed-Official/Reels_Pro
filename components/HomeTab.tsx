@@ -1,19 +1,8 @@
 "use client"
 
 import { useMemo } from "react"
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Pie,
-  PieChart,
-  XAxis,
-  YAxis,
-  Tooltip as ReTooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts"
-import { Activity, Calendar, Eye, Heart, MessageSquare, Search, Share2, Upload, Video } from 'lucide-react'
+import { Area, AreaChart, CartesianGrid, Pie, PieChart, XAxis, YAxis, Tooltip as ReTooltip, ResponsiveContainer, Cell } from "recharts"
+import { Eye, Heart, MessageSquare,  Share2,  Video } from 'lucide-react'
 
 type KPI = {
   label: string
@@ -185,32 +174,6 @@ export default function ReelDashboard() {
             <p className="text-sm text-slate-600">Focused, fast insights with a distinct aurora style.</p>
           </div>
         </div>
-        {/* <div className="flex w-full flex-wrap items-center gap-2 md:w-auto"> */}
-          {/* <label className="relative hidden items-center md:flex">
-            <Search className="pointer-events-none absolute left-3 h-4 w-4 text-slate-500" />
-            <input
-              type="search"
-              placeholder="Search videos..."
-              className="w-72 rounded-md border border-slate-200 bg-white/70 pl-9 pr-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 backdrop-blur outline-none focus:ring-2 focus:ring-indigo-500/30"
-            />
-            <span className="sr-only">Search videos</span>
-          </label> */}
-          {/* <select
-            className="rounded-md border border-slate-200 bg-white/70 px-3 py-2 text-sm text-slate-900 backdrop-blur outline-none focus:ring-2 focus:ring-indigo-500/30"
-            defaultValue="30"
-            aria-label="Date range">
-            <option value="1">Today</option>
-            <option value="7">Last 7 days</option>
-            <option value="30">Last 30 days</option>
-            <option value="custom">Custom range</option>
-          </select> */}
-          {/* <button
-            className="inline-flex items-center gap-2 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
-            type="button">
-            <Upload className="h-4 w-4" />
-            New Reel
-          </button> */}
-        {/* </div> */}
       </header>
 
       {/* KPI grid (4) */}

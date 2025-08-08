@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 import { apiClient } from "@/lib/api-client";
 import Loader from "./Loader";
 import { useUser } from "@/app/context/userContext";
-import { useRouter } from "next/navigation";
 
   const NotificationsTab = () => {
     const { socket } = useSocket();

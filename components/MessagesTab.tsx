@@ -1,81 +1,4 @@
-  // const [isTyping, setIsTyping] = useState(false);
-
-
-
-
-
-  
-  //   useEffect(() => {
-  //   if (!socket || !activeUser?._id) return;
-
-  //   socket.emit("joinRoom", activeUser?._id); 
-
-  //   console.log(activeUser?._id);
-
-  //   socket.on("userStartTyping", ({ userId }) => {
-  //     console.log(userId, "userrrrrrrrrrrrrrrr")
-  //     socket.emit("joinRoom", { chatId: activeUser?._id });
-  //     setTypingUsers((prev) =>
-  //       prev.includes(userId) ? prev : [...prev, userId]
-  //     );
-  //   });
-
-  //   socket.on("userStopTyping", ({ userId }) => {
-  //     setTypingUsers((prev) => prev.filter((id) => id !== userId));
-  //   });
-
-  //   return () => {
- 
-  //     socket.emit("leaveRoom", { chatId: activeUser._id });
-  //   };
-  // }, [socket]);
-
-
-    // const { id } = useParams();
-  // const { data: session} = useSession();
-  // const sender = id as string;
-  // const onsubmit = async(info: z.infer<typeof messageSchema>) => {
-  //   const { message, image } = info;
-  //   const payload: Partial<typeof info> & {
-  //     sender: string;
-  //     receiver: string;
-  //   } = {
-  //     ...(message.trim() && { message }),
-  //     ...(image && { image }),
-  //     sender,
-  //     receiver: session?.user?._id as string,
-  //   }
-
-  //   await asyncHandlerFront(
-  //     async() => {
-  //       await apiClient.createMsg(payload as any);
-  //       reset();
-  //     },
-  //     (error) => {
-  //       toast.error(error.message || "Something went wrong");
-  //     }
-  //   )
-  // }
-  // const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
-  // import { zodResolver } from "@hookform/resolvers/zod";
-  // import { z } from "zod";
-  // import { messageSchema } from "@/schemas/messageSchema";
-
-
-  
-   
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     setIsMobile(window.innerWidth < 1024);
-  //   };
-
-  //   window.addEventListener('resize', handleResize);
-  //   return () => window.removeEventListener('resize', handleResize);
-  // }, []);
-
-
-
-import { Check, CheckCheck, ChevronDown, MessageCircleX, MessageSquare, Send, Trash, Trash2, UserRoundPen, X} from "lucide-react";
+import { Check, CheckCheck, ChevronDown, MessageCircleX, MessageSquare, Send, Trash2, UserRoundPen, X} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import FileUpload from "./FileUplod";
@@ -92,9 +15,6 @@ import { useUser } from "@/app/context/userContext";
 const MessagesTab = () => {
 
   const { setValue, watch } = useForm({
-    // defaultValues: {
-    //   image: "",
-    // }
   })
 
   const [activeUser, setActiveUser] = useState({

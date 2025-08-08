@@ -1,7 +1,7 @@
 "use client";
 import { apiClient, PlaylistFormData } from "@/lib/api-client";
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler";
-import { Loader2, Trash2, X } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Loader from "./Loader";

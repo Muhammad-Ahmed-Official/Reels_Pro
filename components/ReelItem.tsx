@@ -11,8 +11,6 @@ import { useSession } from "next-auth/react"
 import { useParams } from "next/navigation"
 import { useSocket } from "@/app/context/SocketContext"
 // import { useUser } from "@/app/context/userContext"
-import { getChannel } from "@/server/services/rabbitmq.js"
-import { fa } from "zod/v4/locales"
 import { User } from "@/models/User"
 import { useUser } from "@/app/context/userContext"
 
