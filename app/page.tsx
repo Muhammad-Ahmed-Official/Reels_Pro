@@ -15,10 +15,10 @@ import { useUser } from "./context/userContext"
 import { useSocket } from "./context/SocketContext"
 import Loader from "@/components/Loader"
 
-type TabType = "home" | "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "watchLater"
+type TabType = "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "watchLater"
 
 export default function ProfilePage() {
-    const [activeTab, setActiveTab] = useState<TabType>("home");
+    const [activeTab, setActiveTab] = useState<TabType>("videos");
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
     const [collectionModalOpen, setCollectionModalOpen] = useState<boolean>(false);
@@ -39,7 +39,7 @@ export default function ProfilePage() {
     
 
     const tabs = [
-        { id: "home" as TabType, label: "Home", icon: Home },
+        // { id: "home" as TabType, label: "Home", icon: Home },
         { id: "videos" as TabType, label: "Videos", icon: Video },
         { id: "notifications" as TabType, label: "Notifications", icon: Bell },
         { id: "messages" as TabType, label: "Messages", icon: MessageCircle },
@@ -51,8 +51,8 @@ export default function ProfilePage() {
 
     const renderTabContent = () => {
         switch (activeTab) {
-            case "home":
-                return <HomeTab />
+            // case "home":
+            //     return <HomeTab />
             case "videos":
                 return <VideosTab />
             case "notifications":

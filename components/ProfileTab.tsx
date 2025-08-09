@@ -2,10 +2,12 @@ import useProfile from "@/app/context/profileContext"
 import useTheme from "@/app/context/themeContext"
 import { apiClient } from "@/lib/api-client"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
-import { Eye, Heart, MapPin, Users, Video } from "lucide-react"
+import { BarChart2, Eye, Heart, MapPin, Users, Video } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
+import AnalyticsModel from "./AnalyticsModel"
+import PasswordModel from "./PasswordModel"
 
 interface ProfileData {
     currentUser: {
@@ -46,6 +48,8 @@ const ProfileTab = () => {
 
     const [userInfo, setUserInfo] = useState<ProfileData>({} as ProfileData);
     const [location, setLocation] = useState('');
+    const [showAnalytics, setShowAnalytics] = useState<boolean>(false);
+    const [updatePassword, setUpdatePassword] = useState<boolean>(false);
 
     // const handleSave = () => {
     //     setSavedSettings(tempSetting);
@@ -78,7 +82,6 @@ const ProfileTab = () => {
         async (position) => {
           const { latitude, longitude } = position.coords;
 
-          // Optional: use reverse geocoding API to get city name
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
           const data = await res.json();
 
@@ -125,14 +128,21 @@ const ProfileTab = () => {
                             <MapPin className="h-3.5 w-3.5 text-indigo-600" />
                             {location }
                             </span>
+                            <button
+                              onClick={() => setShowAnalytics(true)}
+                              className="ml-2 inline-flex items-center gap-2 rounded-full bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white shadow-md hover:bg-indigo-700 transition-all duration-300 cursor-pointer">
+                              <BarChart2 className="h-4 w-4" />
+                              Analytics
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+          </section>
+          <AnalyticsModel showAnalytics={showAnalytics} setShowAnalytics={setShowAnalytics} />
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <section className="rounded-2xl border border-white/40 bg-white/50 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl">
+          <section className="rounded-2xl border border-white/40 bg-white/50 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl">
               <div className="p-6">
                 <h3 className="text-lg sm:text-xl font-bold sm:mb-2 mb-2 text-gray-900"> Personal Information </h3>
                 <div className="space-y-4 sm:space-y-6">
@@ -179,9 +189,15 @@ const ProfileTab = () => {
                     </div>
                 </div>
                 </div>
+                <div className="flex justify-end m-3 mt-10">
+                  <button type="button" onClick={() => setUpdatePassword(!updatePassword)}
+                    className="inline-flex items-center rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white cursor-pointer shadow-sm hover:from-indigo-700 hover:to-purple-700 transition-all">
+                    Update Password
+                  </button>
+                </div>
             </section>
-      </div>
-
+          </div>
+          <PasswordModel updatePassword={updatePassword} setUpdatePassword={setUpdatePassword} />
     </div>
 
     {/* Stats */}
