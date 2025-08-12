@@ -35,6 +35,13 @@ export type VideoFormData = IVideo & {
     likesCount: number;
     isFollow: boolean;
     isSaved: boolean;
+    allUsersExceptLoggedIn?: [
+        {
+            _id:string,
+            userName: string,
+            profilePic: string
+        }
+    ]
 }
 
 
@@ -94,7 +101,6 @@ class ApiClient{
         });
 
         if(!response.ok){
-            // console.log(response);
             throw new Error(await response.text());
         } 
 
@@ -140,34 +146,35 @@ class ApiClient{
     };
 
 
-    async getUser(){
-        const response = await this.fetch<{data: User}>("profile/updateInfo");
-        return response.data;
+
+    async getFollowers(){
+        const response = await this.fetch<{data: string[]}>("profile/followInfo");
+        return response.data
     }
 
 
 
-    async updateProfile(userName: string, email: string){
+    async updateProfile(data:string){
         return this.fetch("profile/updateInfo",{
             method: "POST",
-            body: { userName, email },
+            body: data,
         })
     }
 
 
 
-    async updatePass(oldPassword: string, newPassword: string){
+    async updatePass(data:string){
         return this.fetch("profile/updatePass", {
             method: "PUT",
-            body: {oldPassword, newPassword},
+            body: data,
         })
     }
 
 
-    async getVideo(id: string){
-        const res = await this.fetch<{data:VideoFormData[]}>(`getVideo?id=${id}`)
-        return res.data;
-    }
+    // async getVideo(id: string){
+    //     const res = await this.fetch<{data:VideoFormData[]}>(`getVideo?id=${id}`)
+    //     return res.data;
+    // }
 
 
     async getVideos() {
@@ -217,11 +224,26 @@ class ApiClient{
             body: {videoId, comment, parentCommentId}
         })
     }
-    // async getComment(id: string){
-    //     return this.fetch<{data:Comment[]}>(`send?videoId=${id}`)
-    // };
 
 
+    async getComment(id: string){
+        return this.fetch<{data:Comment[]}>(`send?videoId=${id}`)
+    };
+
+
+    async deleteComment(id:string){
+        return this.fetch(`send?commentId=${id}`, {
+            method: "DELETE",   
+        })
+    };
+
+
+    async updateComment(commentId:string, comment:string){
+        return this.fetch("send", {
+            method: "PUT",
+            body: {commentId, comment},
+        })
+    };
 
 
     async follow(followingId: string){

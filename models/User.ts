@@ -1,7 +1,6 @@
-// npm i --save-dev @types/bcryptjs
-
 import mongoose, { model, models, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
+
 export interface User {
     userName: string;
     email: string;

@@ -17,34 +17,40 @@ export const connectRabbitMQ = async() => {
     
     channel = await connection.createChannel();
 
-    const queueName = "notifications_queue";
     await channel.assertExchange("direct_notif", "direct", { durable: true });
-    await channel.assertQueue(queueName, { durable: true });
-    await channel.bindQueue(queueName, "direct_notif", "notifications");
+    await channel.assertQueue("notifications_queue", { durable: true });
+    await channel.bindQueue("notifications_queue", "direct_notif", "notifications");
 
-    // await channel.assertExchange("fanout_notif", "fanout", { durable: true });
+    await channel.assertExchange("direct_notif2", "direct", { durable: true });
+    await channel.assertQueue("video_notifications_queue", { durable: true});
+    await channel.bindQueue("video_notifications_queue", "direct_notif2", "video_notifications");
 }
+
 
 export const sendNotification = async(notif:INotification) => {
     const { typeNotification, receiver } = notif;
+
     const payload = Buffer.from(JSON.stringify(notif))
-    
     switch (typeNotification) {
         case "like":
         case "comment":
         case "follow":
-            if(receiver){
+            if(receiver && typeof receiver === "string"){
                 channel.publish("direct_notif", "notifications", payload, { persistent: true });
             }
             break;
     
         case "video":
-           channel.publish("fanout_notif", "", payload, { persistent: true });
+            if(Array.isArray(receiver) && receiver.length > 0){
+                for(const r of receiver){
+                    const notiForUser = {...notif, receiver:r};
+                    const payloadUser = Buffer.from(JSON.stringify(notiForUser));
+                    channel.publish("direct_notif2", "video_notifications", payloadUser, { persistent: true });
+                }
+            }
            break;
         default:
             null;
     }
 }
-
-
 export const getChannel = () => channel;

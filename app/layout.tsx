@@ -34,12 +34,12 @@ export default function RootLayout({
       <Provider>
         <UserProvider>
           <SocketProvider>
-            <ThemeProvider>
+            {/* <ThemeProvider> */}
               <ProfileProvider>
                     { children }
                   <Toaster position="top-right" />
               </ProfileProvider>
-            </ThemeProvider>
+            {/* </ThemeProvider> */}
           </SocketProvider>
         </UserProvider>
       </Provider>

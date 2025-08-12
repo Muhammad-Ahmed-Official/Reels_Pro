@@ -2,12 +2,13 @@ import useProfile from "@/app/context/profileContext"
 import useTheme from "@/app/context/themeContext"
 import { apiClient } from "@/lib/api-client"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
-import { BarChart2, Eye, Heart, MapPin, Users, Video } from "lucide-react"
+import { BarChart2, Eye, Heart, Loader2, MapPin, Users, Video } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import AnalyticsModel from "./AnalyticsModel"
 import PasswordModel from "./PasswordModel"
+import { useForm } from "react-hook-form"
 
 interface ProfileData {
     currentUser: {
@@ -94,6 +95,49 @@ const ProfileTab = () => {
     }
   }, []);
 
+  type FormValues = {
+    userName: string;
+    email: string;
+  };
+
+
+  const {register, handleSubmit, formState: {isSubmitting, errors}, reset} = useForm<FormValues>({
+    defaultValues: {
+      userName: "",
+      email: "",
+    }
+  })
+
+  useEffect(() => {
+    if (userInfo?.currentUser) {
+      reset({
+        userName: userInfo.currentUser.userName || "",
+        email: userInfo.currentUser.email || "",
+      });
+    }
+  }, [userInfo, reset]);
+
+  const onSubmit = async (data: FormValues) => {
+    await asyncHandlerFront(
+      async () => {
+        await apiClient.updateProfile(data as any);
+        setUserInfo(prev => ({
+          ...prev, 
+          currentUser: {
+            ...prev.currentUser,
+            userName: data.userName,
+            email: data.email
+          }
+        }))
+        reset();
+        toast.success("Profile updated successfully");
+      },
+      (error:any) => {
+        toast.error("Failed to login", error)
+      }
+    )
+  }
+
     
     
     // console.log(userInfo, "user:-");
@@ -119,8 +163,7 @@ const ProfileTab = () => {
                         </div>
                     </div>
                     <div className="flex-1 text-center sm:text-left">
-                        <h3 className="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl"> {userInfo?.currentUser?.userName?.slice(0,1).toUpperCase() +
-                        userInfo?.currentUser?.userName?.slice(1)} </h3>
+                        <h3 className="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl"> {userInfo?.currentUser?.userName?.slice(0,1).toUpperCase() +userInfo?.currentUser?.userName?.slice(1)} </h3>
                         <p className="text-sm text-gray-600 sm:text-base"> @{userInfo?.currentUser?.userName} </p>
                         {/* <p className="mt-2 max-w-2xl text-sm text-gray-700 sm:text-base"> Content creator and developer passionate about technology and design.</p> */}
                         <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
@@ -143,23 +186,25 @@ const ProfileTab = () => {
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <section className="rounded-2xl border border-white/40 bg-white/50 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl">
-              <div className="p-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="p-6">
                 <h3 className="text-lg sm:text-xl font-bold sm:mb-2 mb-2 text-gray-900"> Personal Information </h3>
                 <div className="space-y-4 sm:space-y-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                        <input type="text" value={userInfo?.currentUser?.userName?.slice(0,1).toUpperCase() + userInfo?.currentUser?.userName?.slice(1)} className="w-full px-3 py-2 border border-white/50 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent bg-white/70 backdrop-blur-sm text-gray-900 text-sm sm:text-base outline-none"/>
+                        <input type="text" {...register("userName", { required: "Full name is required" })} className="w-full px-3 py-2 border border-white/50 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent bg-white/70 backdrop-blur-sm text-gray-900 text-sm sm:text-base outline-none"/>
                     </div>
+                    {errors.userName && ( <p className="mt-1 text-sm text-red-600">{errors.userName.message}</p>)}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                        <input type="email" value={userInfo?.currentUser?.email} className="w-full px-3 py-2 border border-white/50 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent bg-white/70 backdrop-blur-sm text-gray-900 text-sm sm:text-base outline-none"/>
+                        <input type="email"{...register("email", { required: "Email is required" })} className="w-full px-3 py-2 border border-white/50 rounded-lg focus:ring-2 focus:ring-purple-300 focus:border-transparent bg-white/70 backdrop-blur-sm text-gray-900 text-sm sm:text-base outline-none"/>
                     </div>
+                    {errors.email && ( <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>)}
                     <div className="flex justify-end">
-                    <button type="button" className="inline-flex items-center rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white cursor-pointer shadow-sm hover:from-indigo-700 hover:to-purple-700"> Update Changes
+                    <button type="submit" disabled={isSubmitting} className="inline-flex items-center rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-medium text-white cursor-pointer shadow-sm hover:from-indigo-700 hover:to-purple-700"> {isSubmitting ? <div className="flex justify-center gap-3"><Loader2 className="w-6 h-6 animate-spin" />Updating...</div> : "Update Changes"}
                     </button>
                     </div>
                 </div>
-              </div>
+              </form>
             </section>
 
             {/* Settings */}

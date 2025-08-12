@@ -3,6 +3,7 @@ import { User } from "@/models/User";
 import { Chat } from "@/server/Models/Chat.models";
 import { asyncHandler } from "@/utils/AsyncHandler";
 import { nextError, nextResponse } from "@/utils/Responses";
+import mongoose from "mongoose";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -41,11 +42,11 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
     const messages = await Chat.find(
         {
             $or: [
-                { sender: userId, receiver: token._id },
-                { sender: token._id, receiver: userId }
+                { sender: new mongoose.Types.ObjectId(userId!), receiver: new mongoose.Types.ObjectId(token._id) },
+                { sender: new mongoose.Types.ObjectId(token._id), receiver: new mongoose.Types.ObjectId(userId!) }
             ]
         }
     ).sort({ createdAt: 1 });
-
+    
     return nextResponse(200, "", messages);
 })

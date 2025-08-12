@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useUser } from "./userContext";
 
@@ -12,19 +12,22 @@ interface ISocketContext {
 
 const SocketContext = createContext<ISocketContext | null>(null);
 
-
 export const SocketProvider = ( {children} : {children: ReactNode} ) => {
     const { user } = useUser();
     const [socket, setSocket] = useState<Socket>();
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+    // const socketRef = useRef<Socket | null>(null);
 
     useEffect(() => {
-        if(!user?._id) return
+        if(!user?._id) return;
+        // if (socketRef.current) return; // already connected
+
             const _socket = io("http://localhost:3000", {
                 query:{    
                     userId: user?._id
                 }}
             );
+            // socketRef.current = _socket;
             setSocket(_socket);
 
             _socket.on("getOnlineUser", (users: string[]) => {
@@ -33,6 +36,7 @@ export const SocketProvider = ( {children} : {children: ReactNode} ) => {
 
             return () => {
                 _socket.disconnect();
+                // socketRef.current = null;
                 setSocket(undefined);
             }
     }, [user?._id])

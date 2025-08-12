@@ -20,14 +20,23 @@ export default function CreateTab({
 }) {
   const [currentStep, setCurrentStep] = useState<number>(1);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { isSubmitting, errors },
-    setValue,
-    watch,
-  } = useForm<z.infer<typeof videoSchema>>({
+  const sendNotification = async() => {
+  const response = await apiClient.getFollowers();
+  const payload = {
+    receiver: response,
+    message: "new video uploaded",
+    typeNotification: "video",
+    createdAt: new Date(),
+  };
+    await fetch('http://localhost:3000/api/sendVideoNotification', {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  }
+
+
+  const { register, handleSubmit, reset, formState: { isSubmitting, errors }, setValue, watch } = useForm<z.infer<typeof videoSchema>>({
     resolver: zodResolver(videoSchema),
     defaultValues: {
       title: "",
@@ -43,12 +52,14 @@ export default function CreateTab({
         toast.success("Reel published successfully!");
         reset();
         setIsModalOpen(false);
+        sendNotification();
       },
       (error) => {
         toast.error(error.message || "Something went wrong");
       }
     );
   };
+
 
   return (
     <>
@@ -91,7 +102,7 @@ export default function CreateTab({
                     {watch("videoUrl") && (
                       <button
                         type="button"
-                        className="px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-lg shadow hover:shadow-lg text-sm font-medium transition"
+                        className="px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-lg shadow hover:shadow-lg text-sm font-medium transition cursor-pointer"
                         onClick={() => setCurrentStep(2)}>
                         Next
                       </button>
@@ -127,7 +138,7 @@ export default function CreateTab({
                           placeholder="Enter an engaging title..."
                           maxLength={100}
                           {...register("title")}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-300 bg-white/70 backdrop-blur-sm text-sm text-gray-800"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-300 bg-white/70 backdrop-blur-sm text-sm text-gray-800 outline-none"
                         />
                         {errors.title && (
                           <p className="text-red-500 text-sm">{errors.title.message}</p>
@@ -140,7 +151,7 @@ export default function CreateTab({
                           placeholder="Tell your audience about this reel..."
                           maxLength={500}
                           {...register("description")}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-300 bg-white/70 backdrop-blur-sm text-sm text-gray-800 h-24 resize-none"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-300 bg-white/70 backdrop-blur-sm text-sm text-gray-800 h-24 resize-none outline-none"
                         />
                         {errors.description && (
                           <p className="text-red-500 text-sm">{errors.description.message}</p>
@@ -164,7 +175,7 @@ export default function CreateTab({
                   <div className="flex flex-col sm:flex-row justify-between gap-3 border-t pt-4">
                     <button
                       type="button"
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition text-sm font-medium"
+                      className="cursor-pointer px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition text-sm font-medium"
                       onClick={() => setCurrentStep(1)}
                       disabled={isSubmitting}>
                       Back
@@ -172,7 +183,7 @@ export default function CreateTab({
 
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-lg shadow hover:shadow-lg disabled:opacity-50 transition text-sm font-medium flex items-center justify-center gap-2"
+                      className="px-4 py-2 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-lg shadow hover:shadow-lg disabled:opacity-50 transition text-sm font-medium flex items-center justify-center gap-2 cursor-pointer"
                       disabled={isSubmitting}>
                       {isSubmitting ? (
                         <>

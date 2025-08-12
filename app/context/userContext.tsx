@@ -5,6 +5,7 @@ import { createContext, ReactNode, useContext } from "react";
 
 interface IUserContext {
     user: {
+    userId?: string;
     _id?: string;
     userName?: string;
     email?: string;

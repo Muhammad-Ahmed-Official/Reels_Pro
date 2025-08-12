@@ -1,6 +1,17 @@
 import { consumeNotifications } from '../Consumer/notificationConsumer.js';
 import { Chat } from '../Models/Chat.models.js';
 import { Server } from 'socket.io'
+import { Redis } from "ioredis";
+import dotenv from "dotenv";
+
+dotenv.config({quiet:true});
+
+const redis = new Redis ({
+    host: process.env.REDIS_HOST_URL || "redis-15073.crce179.ap-south-1-1.ec2.redns.redis-cloud.com",
+    port: Number(process.env.REDIS_PORT_NUMBER) || 15073,
+    password: process.env.REDIS_PASSWORD,
+});
+
 
 export class SocketService {
     private _io: Server;
@@ -51,6 +62,7 @@ export class SocketService {
 
             socket.on("message", async (data) => {
                 const { sender, receiver, message } = data;
+                // console.log(receiver);
                 if (!receiver) return;
 
                 const payload = { sender, receiver, message };

@@ -1,38 +1,51 @@
+"use client"
+
 import { apiClient } from "@/lib/api-client"
-import { IVideo } from "@/models/Video"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
-import { Video } from "lucide-react"
-import { useSession } from "next-auth/react"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import Loader from "./Loader"
-
-function getDaysAgo(isoDate: Date): string {
-    const createdDate = new Date(isoDate);
-    const now = new Date();
-    const diffInMs = now.getTime() - createdDate.getTime();
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-
-    if (diffInDays === 0) return "Today";
-    if (diffInDays === 1) return "1 day ago";
-    return `${diffInDays} days ago`;
-}
+import { useState, useRef, useEffect } from "react"
+import ReelItem from "@/components/ReelItem";
+import type { VideoFormData } from "@/lib/api-client"
 
 const VideosTab = () => {
-    const [videos, setVideos] = useState<IVideo[]>([]);
-    const router = useRouter();
-    const { data: session } = useSession();
     const [loading, setLoading] = useState(false);
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [reel, setReel] = useState<VideoFormData[]>([]);
+    
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        setCurrentIndex((prev) => Math.min(prev + 1, reel!.length - 1));
+      } else if (e.key === "ArrowUp") {
+        setCurrentIndex((prev) => Math.max(prev - 1, 0));
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+  
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const itemHeight = container.clientHeight;
+    container.scrollTo({
+      top: currentIndex * itemHeight,
+      behavior: "smooth",
+    });
+  }, [currentIndex]);
+ 
 
     useEffect(() => {
         const getVideo = async () => {
             setLoading(true);
-            asyncHandlerFront(
+            await asyncHandlerFront(
                 async() => {
                     const reseponse = await apiClient.getVideos();
-                    setVideos(reseponse);
-                    console.log(reseponse)
+                    setReel(reseponse as any)
                 }, 
                 (error) => {
                     toast.error(error.message);
@@ -44,69 +57,31 @@ const VideosTab = () => {
         getVideo();
     }, [])
 
-    // console.log(videos)
 
     if(loading) return <Loader />
-
+    
     return (
-        <div className="p-6">
-        <h2 className="text-2xl font-bold mb-6 ml-14 lg:ml-0 text-gray-900"> Videos </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {videos.length > 0 ? (
-            videos.map((video) => (
+        <div className="px-6">
+            <div className="relative w-full h-screen flex justify-center overflow-hidden">
                 <div
-                key={video._id?.toString()}
-                className="group bg-white/70 backdrop-blur-lg border border-white/40 shadow-sm hover:shadow-lg rounded-2xl overflow-hidden transition-all duration-300">
-                {/* Video Preview */}
-                <div className="relative h-48 overflow-hidden bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center">
-                    {video.videoUrl ? (
-                    <video
-                        src={video.videoUrl}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    ) : (
-                    <Video className="w-12 h-12 text-gray-400" />
-                    )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                </div>
-
-                {/* Content */}
-                <div className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                    <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 shadow-sm">
-                        {video?.title}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                        {getDaysAgo(video.createdAt)}
-                    </span>
+                    ref={containerRef}
+                    className="md:max-w-md h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none"}}>
+                   {reel!.map((reel, index) => (
+                    <div key={reel?._id} className="snap-start pt-2">
+                        <ReelItem reel={reel} isActive={index === currentIndex} />
                     </div>
+                    ))}
 
-                    <p className="text-sm text-gray-700 line-clamp-2">
-                    {video?.description}
-                    </p>
+                </div>
 
-                    {/* Action */}
-                    <div className="flex justify-end">
-                    <button
-                        onClick={() =>
-                        session?.user?._id
-                            ? router.push(`/video/${video._id?.toString()}`)
-                            : router.push("/login")
-                        }
-                        className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg shadow hover:shadow-md hover:from-purple-600 hover:to-pink-600 text-sm transition-all cursor-pointer">
-                        Watch
-                    </button>
-                    </div>
+                {/* Scroll Indicators */}
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2">
+                    {reel?.map((_, index) => (
+                    <div key={index} className={`w-1 h-8 rounded-full transition-colors text-white ${index === currentIndex+1 ? "bg-gray-200" : "bg-black/70"}`}/>
+                    ))}
                 </div>
-                </div>
-            ))
-            ) : (
-            <h1 className="text-2xl font-bold ml-14 lg:ml-0 text-gray-500">
-                No video found
-            </h1>
-            )}
-        </div>
+            </div>
         </div>
     )
 }

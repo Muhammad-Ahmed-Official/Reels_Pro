@@ -49,13 +49,16 @@ export const POST = asyncHandler(async (request:NextRequest): Promise<NextRespon
 
     const duplicateUser = await User.findOne({
         _id: { $ne: currentUser?._id},
-        $or: [ { userName} , { email} ],
+        $or: [ { userName } , { email } ],
     });
     if(duplicateUser) return nextError(409, "Username or email alredy in use");
 
     currentUser.userName = userName;
     currentUser.email = email;
-    await currentUser.save();
+    await User.updateOne(
+        { _id: token?._id },
+        { $set: {userName, email} }
+    );
 
     return nextResponse(201, "Profile updated successfully");
 })

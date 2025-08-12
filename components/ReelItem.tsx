@@ -14,14 +14,33 @@ import { useSocket } from "@/app/context/SocketContext"
 import { User } from "@/models/User"
 import { useUser } from "@/app/context/userContext"
 
-const formatNumber = (num: number): string => {
+const formatNumber = (num: number): any => {
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + "M"
   }
   if (num >= 1000) {
     return (num / 1000).toFixed(1) + "K"
   }
-  return num.toString()
+  return num;
+}
+
+
+function getDaysAgo(input?: string | Date) {
+  try {
+    if (!input) return "now"
+    const then = new Date(input).getTime()
+    const diff = Date.now() - then
+    const sec = Math.max(1, Math.floor(diff / 1000))
+    if (sec < 60) return `${sec}s ago`
+    const min = Math.floor(sec / 60)
+    if (min < 60) return `${min}m ago`
+    const hrs = Math.floor(min / 60)
+    if (hrs < 24) return `${hrs}h ago`
+    const days = Math.floor(hrs / 24)
+    return `${days}d ago`
+  } catch {
+    return "now"
+  }
 }
 
 
@@ -36,14 +55,12 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const { id } = useParams();
   const { data: session } = useSession();
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [users, setUsers] = useState<User[]>([]);
-  // const [openSaveModal, setOpenSaveModal] = useState(false);
+  // const [users, setUsers] = useState<User[]>([]);
+  // const [showComments, setShowComments] = useState(false);
   // const [playlistName, setPlaylistName] = useState<PlaylistFormData[]>([]);
   // const [likes, setLikes] = useState(reel.likes)
-  // console.log(session?.user) 
   const videoRef = useRef<HTMLVideoElement>(null)
   const commentButtonRef = useRef<HTMLButtonElement>(null)
-
   const { socket } = useSocket();
   const { user } = useUser();
 
@@ -97,7 +114,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         async() => {
             await apiClient.likeUnlikeVideo(reel?._id);
             toast.success(isLiked ? "Video liked successfully" : "Video unliked successfully");
-            sendNotification("like", isLiked ? "Video liked successfully" : "Video unliked successfully");
+            sendNotification("like", isLiked ? "liked your reel" : "Unliked your reel");
         }, 
         (error) => {
           toast.error(error.message || "Something went wrong");
@@ -127,7 +144,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         async() => {
             await apiClient.follow(reel.owner._id as string);
             toast.success(!isFollowing ? "Follow successfully" : "Unfollow successfully");
-            sendNotification("follow", !isFollowing ? "Follow successfully" : "Unfollow successfully")
+            sendNotification("follow", !isFollowing ? "Follow's you" : "Unfollow you")
         }, 
         (error) => {
           toast.error(error.message)
@@ -135,23 +152,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     )
   }
 
-
-  
-  useEffect(() => {
-    const getAllUser = async() => {
-      await asyncHandlerFront(
-        async() => {
-          const response = await apiClient.getUsers();
-          setUsers(response as any);
-        },
-        (error) => {
-          toast.error(error.message)
-        }
-      )
-    };
-
-    getAllUser()
-  }, [])
 
 
   const handleSelect = async(id:string, video:string) => {
@@ -203,9 +203,11 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     setIsCommentModalOpen(false)
   }
 
+  // console.log(reel);
+
   return (
     <>
-      <div className="relative w-full h-screen bg-black flex items-center justify-center overflow-hidden">
+      <div className="relative w-full h-[710px] flex items-center justify-center overflow-hidden rounded-xl">
         {/* Video */}
         <video
           ref={videoRef}
@@ -213,7 +215,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
           loop
           muted={isMuted}
           playsInline
-        //   poster={reel.thumbnail}
         >
           <source src={reel.videoUrl} type="video/mp4" />
         </video>
@@ -229,7 +230,12 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
 
         {/* Top Controls */}
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-          <div className="text-white font-semibold text-lg">Reels</div>
+          <div className="flex flex-col">
+            <span className="text-black font-semibold text-lg">{reel?.title}</span>
+            <span className="text-black text-[14px] font-semibold opacity-80">
+              {getDaysAgo(reel?.createdAt)}
+            </span>
+          </div>
           <button onClick={toggleMute} className="bg-black/50 rounded-full p-2">
             {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
           </button>
@@ -266,32 +272,32 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
 
             <div className="flex flex-col items-center space-y-4 sm:space-y-6">
               {/* Like */}
-              <button onClick={toggleLike} className="flex flex-col items-center cursor-pointer">
-                <div className="bg-black/50 rounded-full p-2 sm:p-3">
-                  <Heart className={`w-6 h-6 sm:w-7 sm:h-7 ${isLiked ? "text-red-500 fill-red-500" : "text-white"}`} />
+              <button onClick={toggleLike} className="flex flex-col items-center cursor-pointer mb-0">
+                <div className="bg-[#0000002E] rounded-full p-3 font-semibold">
+                  <Heart className={`w-6 h-6 ${isLiked ? "text-red-500 fill-red-500" : "text-white"}`} />
                 </div>
-                <span className="text-white text-xs sm:text-sm font-medium mt-1">{formatNumber(reel.likesCount)}</span>
+                <span className="text-white text-xs sm:text-sm font-medium my-2">{formatNumber(reel.likesCount)}</span>
               </button>
 
               {/* Comment */}
               <button ref={commentButtonRef} onClick={handleCommentClick} className="flex flex-col items-center cursor-pointer">
-                <div className="bg-black/50 rounded-full p-2 sm:p-3">
-                  <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                <div className="rounded-full p-3 bg-[#0000002E]">
+                  <MessageCircle className="w-7 h-7 text-white font-semibold" />
                 </div>
                 {/* <span className="text-white text-xs sm:text-sm font-medium mt-1">{formatNumber(reel.comments)}</span> */}
               </button>
 
               {/* Share */}
               <button  onClick={() => setShowModal(!showModal)} className="flex flex-col items-center">
-                <div className="bg-black/50 rounded-full p-2 sm:p-3">
-                  <Share2 className="w-6 h-6 sm:w-7 sm:h-7 text-white cursor-pointer" />
+                <div className="bg-[#0000002E] rounded-full p-3 font-semibold">
+                  <Share2 className="w-7 h-7 text-white cursor-pointer font-semibold" />
                 </div>
                 {/* <span className="text-white text-xs sm:text-sm font-medium mt-1">{formatNumber(reel.shares)}</span> */}
               </button>
 
               {/* Bookmark */}
               <button onClick={toggleBookmark} className="flex flex-col items-center cursor-pointer">
-                <div className="bg-black/50 rounded-full p-2 sm:p-3">
+                <div className="bg-[#0000002E] rounded-full p-3 font-semibold">
                   <Bookmark
                     className={`w-6 h-6 sm:w-7 sm:h-7 ${isBookmarked ? "text-yellow-500 fill-yellow-500" : "text-white"}`}
                   />
@@ -307,10 +313,10 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                     </div>
 
                     <div className="space-y-3 max-h-72 overflow-y-auto">
-                      {users.map((user) => (
+                      {reel?.allUsersExceptLoggedIn?.map((user) => (
                         <div onClick={() => handleSelect(user?._id as any, reel?.videoUrl)} key={user?.profilePic} className="flex items-center gap-3 hover:bg-gray-100 p-2 rounded-lg cursor-pointer">
-                          <img src={user.profilePic} alt={user.userName} className="w-10 h-10 rounded-full object-cover" />
-                          <span className="font-medium">{user.userName}</span>
+                          <img src={user.profilePic} alt={user?.userName} className="w-10 h-10 rounded-full object-cover" />
+                          <span className="font-medium">{user?.userName}</span>
                         </div>
                       ))}
                     </div>
@@ -364,11 +370,10 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         isOpen={isCommentModalOpen}
         onClose={closeCommentModal}
         reelId={reel._id}
-        commentCount={reel?.commentWithUser}
+        // commentCount={reel?.commentWithUser}
         position={commentButtonPosition}
       />
     </>
   )
 }
-
 export default ReelItem

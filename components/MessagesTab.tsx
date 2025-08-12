@@ -22,7 +22,7 @@ const MessagesTab = () => {
     userName: '',
     profilePic: '',
   });
-  const [users, setUsers] = useState<IChat>();
+  const [users, setUsers] = useState<IChat[]>([]);
   
   const [search, setSearch] = useState<string | null>('');
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -50,7 +50,7 @@ const MessagesTab = () => {
         await asyncHandlerFront(
           async () => {
             const response = await apiClient.searchUserChat(debouncedSearch);
-            setUsers(response)
+            setUsers(response as any)
           },
           (error) => {
             toast.error(error.message || "Something went wrong");
@@ -68,7 +68,7 @@ const MessagesTab = () => {
       await asyncHandlerFront(
         async() => {
           const response = await apiClient.sidebarUsers();
-          setUsers(response);
+          setUsers(response as any);
         },
         (error) => {
           toast.error(error.message || "Something went wrong");
@@ -83,6 +83,7 @@ const MessagesTab = () => {
     asyncHandlerFront(
       async () => {
         const response = await apiClient.getMsg(activeUser?._id);
+        // console.log(response)
         setMessages(response as any);
       },
       (error) => {
@@ -221,15 +222,12 @@ const MessagesTab = () => {
     if(user?._id) socket?.emit("seenMsg", user?._id)
   }
 
-
-
-
   // console.log(messages);
 
   
   return (
     <div className="p-6 h-[calc(100vh-80px)]">
-      <h2 className="text-2xl font-bold mb-4 ml-14 lg:ml-0">Messages{activeUser?.userName && `/${activeUser?.userName?.charAt(0).toUpperCase() + activeUser.userName?.slice(1)}`}</h2>
+      <h2 className="text-2xl font-bold mb-4 ml-14 lg:ml-0">Messages{activeUser?.userName && `/${activeUser?.userName?.charAt(0)?.toUpperCase() + activeUser.userName?.slice(1)}`}</h2>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
         {/* Sidebar */}
         <div className="lg:col-span-1">
@@ -256,39 +254,64 @@ const MessagesTab = () => {
                 )}
               </div>
               <div className="space-y-2">
-                {users?.map((name:any) => (
-                  <div
-                    key={name}
-                    className={`flex items-center space-x-3 p-2 rounded-xl cursor-pointer transition-all ${
-                      activeUser === name
-                        ? "bg-gradient-to-r from-purple-400 to-pink-400 text-white shadow-md"
-                        : "hover:bg-white/60 hover:shadow-sm"
-                    }`}
-                    onClick={() => {
-                      setActiveUser({...activeUser, userName: name?.userName, profilePic: name.profilePic, _id: name?._id});
-                      socket?.emit("joinRoom", name?._id);
-                      handleSeen();
-                    }}>
-                    <div className="relative w-10 h-10">
-                      <Image
-                        src={name.profilePic}
-                        alt="profilePic"
-                        width={40}
-                        height={40}
-                        className="object-cover w-full h-full rounded-full border border-gray-200"
-                      />
-                      {onlineUsers?.includes(name._id) && (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-1 border-white rounded-full" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-sm">{name?.userName.charAt(0).toUpperCase() + name?.userName.slice(1)}</div>
-                      <div className="text-xs opacity-70">
-                        {/* {mockMessages[name].at(-1)?.text || "Last message..."} */}
+                {users?.map((user: any) => {
+                  const isActive = activeUser?._id === user?.userId;
+
+                  const formatTime = (dateString: string) => {
+                    const date = new Date(dateString);
+                    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                  };
+
+                  return (
+                    <div
+                      key={user?.userId}
+                      className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                        isActive
+                          ? "bg-gradient-to-r from-purple-400 to-pink-400 text-white shadow-md"
+                          : "hover:bg-white/60 hover:shadow-sm"
+                      }`}
+                      onClick={() => {
+                        setActiveUser({
+                          _id: user?.userId,
+                          userName: user?.userName,
+                          profilePic: user.profilePic
+                        });
+                        socket?.emit("joinRoom", user?.userId);
+                        handleSeen();
+                      }}
+                    >
+                      {/* Left Section: Avatar + Name + Last Message */}
+                      <div className="flex items-center space-x-3 overflow-hidden">
+                        <div className="relative w-12 h-12 flex-shrink-0">
+                          <Image
+                            src={user.profilePic}
+                            alt="profilePic"
+                            width={48}
+                            height={48}
+                            className="object-cover w-full h-full rounded-full border border-gray-200"
+                          />
+                          {onlineUsers?.includes(user.userId) && (
+                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="font-semibold truncate">{user?.userName?.charAt(0)?.toUpperCase() + user?.userName?.slice(1)}</div>
+                          <div className={`text-sm truncate ${isActive ? "text-white/80" : "text-gray-500"}`}>
+                            {user?.latestMessage?.length > 25
+                              ? user.latestMessage.slice(0, 25) + "..."
+                              : user.latestMessage || "No messages yet"}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Section: Time */}
+                      <div className={`text-xs ${isActive ? "text-white/80" : "text-gray-400"}`}>
+                        {formatTime(user.createdAt)}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -307,7 +330,7 @@ const MessagesTab = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-medium">{activeUser.userName.charAt(0).toUpperCase() + activeUser.userName.slice(1)}</h3>
+                  <h3 className="font-medium">{activeUser?.userName?.charAt(0)?.toUpperCase() + activeUser?.userName?.slice(1)}</h3>
                   <p className="text-sm text-gray-500">
                     {onlineUsers?.includes(activeUser?._id)? "Online" : "Offline"}
                   </p>
@@ -326,17 +349,11 @@ const MessagesTab = () => {
               {activeUser?.userName ? (
                 <div className="flex-1 flex flex-col gap-2 overflow-y-auto h-auto pr-2">
                   {messages?.map((msg, i) => {
-                  const isOwn = msg.sender !== user?._id;
+                  const isOwn = msg.sender !== user?.userId;
                   return (
                     <div
-                      key={i}
+                      key={msg?._id}
                       className={`flex items-end gap-2 group ${ isOwn ? "justify-end" : "justify-start"}`}>
-
-                      {/* {!isOwn? <img
-                        src={activeUser?.profilePic}
-                        alt="Avatar"
-                        className="w-8 h-8 rounded-full object-cover"
-                      /> : ""} */}
 
                       <div className={`relative max-w-[75%]`}>
                         <div
@@ -439,14 +456,6 @@ const MessagesTab = () => {
                           </div>
 
                       </div>
-
-                      {/* {isOwn && (
-                        <img
-                          src={activeUser?.profilePic}
-                          alt="Avatar"
-                          className="w-8 h-8 rounded-full object-cover border"
-                        />
-                      )} */}
                     </div>
                   );
                 })}
@@ -463,9 +472,7 @@ const MessagesTab = () => {
                       </div>
 
                       <h2 className="text-2xl font-bold">Welcome to Chatty!</h2>
-                      <p className="text-base-content/60">
-                        Select a conversation from the sidebar to start chatting
-                      </p>
+                      <p className="text-base-content/60"> Select a conversation from the sidebar to start chatting </p>
                     </div>
                   </div>
               )}
@@ -504,9 +511,7 @@ const MessagesTab = () => {
                     placeholder="Type a message..."
                     className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition"
                     />
-                  <button onClick={handleSendMessage} className="bg-gradient-to-r from-purple-400 to-pink-400 text-white p-2 rounded-full shadow hover:shadow-lg transition">
-                    <Send size={19} />
-                  </button>
+                  <button onClick={handleSendMessage} className="bg-gradient-to-r from-purple-400 to-pink-400 text-white p-2 rounded-full shadow hover:shadow-lg transition cursor-pointer"> <Send size={19} /> </button>
                   <FileUpload
                     fileType="image"
                     onSuccess={(res) => setValue("image", res.url)}

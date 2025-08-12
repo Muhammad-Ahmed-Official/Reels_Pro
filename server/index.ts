@@ -49,7 +49,26 @@ const startServer = async () => {
 startServer();
 
 // Routes
+const notif = {
+  typeNotification: "video",
+  receiver: ["689222b857c8bbd13533205f", "689222b857c8bbd13533235f"],
+  message: "Upload new Reel",
+  reelId: "6892380f44efd746aec5fe3b"
+}
+
 app.post("/api/sendNotification", async (req, res) => {
+  try {
+    const notif = req.body;
+    await sendNotification(notif);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("❌ Error in /notify:", error);
+    res.status(500).json({ success: false, error: "Notification failed" });
+  }
+});
+
+
+app.post("/api/sendVideoNotification", async (req, res) => {
   try {
     const notif = req.body;
     await sendNotification(notif);

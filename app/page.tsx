@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Home, Video, Bell, MessageCircle, Plus, User, Menu, X, LogOut, ListVideo } from "lucide-react"
+import { Video, Bell, MessageCircle, Plus, User, Menu, X, LogOut, ListVideo } from "lucide-react"
 import HomeTab from "@/components/HomeTab"
 import VideosTab from "@/components/VideoTab"
 import NotificationsTab from "@/components/NotificationsTab"
@@ -39,7 +39,6 @@ export default function ProfilePage() {
     
 
     const tabs = [
-        // { id: "home" as TabType, label: "Home", icon: Home },
         { id: "videos" as TabType, label: "Videos", icon: Video },
         { id: "notifications" as TabType, label: "Notifications", icon: Bell },
         { id: "messages" as TabType, label: "Messages", icon: MessageCircle },
@@ -51,8 +50,6 @@ export default function ProfilePage() {
 
     const renderTabContent = () => {
         switch (activeTab) {
-            // case "home":
-            //     return <HomeTab />
             case "videos":
                 return <VideosTab />
             case "notifications":
@@ -61,8 +58,6 @@ export default function ProfilePage() {
                 return <MessagesTab />
             case "profile":
                 return <ProfileTab />
-            // case "playlist":
-            //     return <PlaylistTab />
             default:
                 return <HomeTab />
         }
@@ -79,7 +74,7 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen">
             <div className="lg:hidden fixed top-4 left-4 z-50">
-                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="btn btn-square btn-primary">
+                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg shadow hover:shadow-md hover:from-purple-600 hover:to-pink-600 text-sm transition-all cursor-pointer">
                     {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </button>
             </div>
@@ -117,6 +112,7 @@ export default function ProfilePage() {
                             setCollectionModalOpen(!collectionModalOpen);
                         } else {
                             setActiveTab(tab.id);
+                            // router.push(`/${tab.id}`, { scroll: false});
                             setSidebarOpen(false);
                         }
                         }}
@@ -147,7 +143,7 @@ export default function ProfilePage() {
             {/* Overlay for mobile */}
             {sidebarOpen && (
             <div
-                className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+                className="fixed inset-0 bg-opacity-50 z-30 lg:hidden"
                 onClick={() => setSidebarOpen(false)}
             />
             )}

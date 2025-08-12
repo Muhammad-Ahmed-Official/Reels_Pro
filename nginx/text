@@ -1,0 +1,202 @@
+worker_processes auto;
+ it  is use this to many parallel cooention to handle client process using a single thread event loop
+
+events{
+    worker_connections 1024 ;
+}
+
+how many simu;taneous connecton can be opened so if we 1 worker process will be able to serve 1024 clients
+
+http{
+
+    upstream nodejs_cluster {
+        server server1:8000;
+        server server2:8000;
+        server server3:8000;
+    }
+
+    server {
+        listen 80;
+    tell nginx to handle request for particular domain or IP address
+
+        location /  {
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host $host;
+            pass client info to backend through nginx
+            proxy_pass http://nodejs_cluster;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "Upgrade";
+        }
+    }
+}
+
+by default nginx used roundrobin algo in cyclr manner
+
+
+
+
+
+
+
+
+
+
+
+
+
+# services:
+#   app1: 
+#     build: .
+#     enviroment: 
+#       - App_Name=App1
+#     ports: 
+#       - "3001:3000"
+
+#     app2:
+#       build: .
+#       enviroment:
+#         - App_Name=App2
+#       ports: 
+#         - "3002:3000"
+    
+#     app3:
+#       build: .
+#       enviroment:
+#         - App_Name=App2
+#       ports: 
+#         - "3003:3000"
+
+#   app:
+#     build: 
+#     container_name: my_node_app
+#     ports:
+#       - "8000:8000"
+#     volumes:
+#       - .:/app
+#       - /app/node_modules
+#     depends_on:
+#       - rabbitmq
+
+#   rabbitmq:
+#     image: rabbitmq:3-management
+#     container_name: rabbitmq
+#     ports:
+#       - "5672:5672"   
+#       - "15672:15672"
+#     environment:
+#       RABBITMQ_DEFAULT_USER: admin
+#       RABBITMQ_DEFAULT_PASS: admin
+
+
+
+
+
+
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - server1
+      - server2
+      - server3
+    networks:
+      - app_network
+
+  server1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: server1
+    networks:
+      - app_network
+    ports:
+      - "8001:8000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb+srv://aymicoding:DQmDt7MFFqBGJoy0@cluster0.2oluew4.mongodb.net/reelsPro
+      - SERVER_ID=server-1
+      - REDIS_HOST=redis
+      - PORT=6379
+      - PASSWORD=DuqkNLY9Jg4ZmWR9aLDZrKlpusoOn33u
+
+  server2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: server2
+    networks:
+      - app_network
+    ports:
+      - "8002:8000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb+srv://aymicoding:DQmDt7MFFqBGJoy0@cluster0.2oluew4.mongodb.net/reelsPro
+      - SERVER_ID=server-2
+      - REDIS_HOST=redis
+      - PORT=6379
+      - PASSWORD=DuqkNLY9Jg4ZmWR9aLDZrKlpusoOn33u
+
+  server3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: server3
+    networks:
+      - app_network
+    ports:
+      - "8003:8000"
+    depends_on:
+      - redis
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb+srv://aymicoding:DQmDt7MFFqBGJoy0@cluster0.2oluew4.mongodb.net/reelsPro
+      - SERVER_ID=server-3
+      - REDIS_HOST=redis
+      - PORT=6379
+      - PASSWORD=DuqkNLY9Jg4ZmWR9aLDZrKlpusoOn33u
+
+  redis:
+    image: redis
+    container_name: redis
+    networks:
+      - app_network
+    ports:
+      - "6379:6379"
+    restart: always
+    command: redis-server --requirepass DuqkNLY9Jg4ZmWR9aLDZrKlpusoOn33u
+
+  app:
+    build: 
+    container_name: my_node_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+
+
+networks:
+  app_network:
+    driver: bridge
+
+# docker compose up --build -d

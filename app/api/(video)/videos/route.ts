@@ -12,21 +12,21 @@ import { getToken } from "next-auth/jwt";
 import { Playlist } from "@/models/Playlist";
 
 export const GET = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
-    await connectionToDatabase();
-
     const token = await getToken({ req: request });
     if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
+    
+    await connectionToDatabase();
 
     const videos = await Video.aggregate([
     { $sort: { createdAt: -1 } },
 
-    // ✅ 1. Add owner info
+    // owner info
     {
         $lookup: {
-        from: "users",
-        localField: "user",
-        foreignField: "_id",
-        as: "owner"
+            from: "users",
+            localField: "user",
+            foreignField: "_id",
+            as: "owner"
         }
     },
     {
@@ -36,13 +36,13 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
         }
     },
 
-    // ✅ 2. Add likes info
+    // likes info
     {
         $lookup: {
-        from: "likes",
-        localField: "_id",
-        foreignField: "video",
-        as: "likedUserDocs"
+            from: "likes",
+            localField: "_id",
+            foreignField: "video",
+            as: "likedUserDocs"
         }
     },
     {
@@ -50,9 +50,9 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
         likes: { $size: { $ifNull: ["$likedUserDocs", []] } },
         likesUserIds: {
             $map: {
-            input: "$likedUserDocs",
-            as: "like",
-            in: "$$like.user"
+                input: "$likedUserDocs",
+                as: "like",
+                in: "$$like.user"
             }
         }
         }
@@ -89,147 +89,93 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
         }
     },
 
-    // ✅ 5. Derive isFollow
+    // isFollow
     {
         $addFields: {
         isFollow: {
-            $cond: {
-            if: { $gt: [{ $size: "$subscriptionInfo" }, 0] },
-            then: true,
-            else: false
+                $cond: {
+                if: { $gt: [{ $size: "$subscriptionInfo" }, 0] },
+                then: true,
+                else: false
             }
         }
         }
     },
-
-    // ✅ 6. Project required fields only
     {
-        $project: {
-        videoUrl: 1,
-        title: 1,
-        createdAt: 1,
-        description: 1,
-        views: 1,
-        likes: 1,
-        // user: 1,
-        isFollow: 1,
-        owner: {
-            userName: "$owner.userName",
-            profilePic: "$owner.profilePic"
-        },
-        LikedUser: {
-            $map: {
-            input: "$LikedUserInfo",
-            as: "o",
-            in: {
-                userName: "$$o.userName",
-                profilePic: "$$o.profilePic"
-            }
-            }
+        $lookup: {
+            from: "comments",
+            let: { videoId: "$_id" },
+            pipeline: [
+                { $match: { $expr: { $eq: ["$videoId", "$$videoId"]}}},
+                {
+                    $lookup: {
+                        from: "users",
+                        foreignField: "_id",
+                        localField: "user",
+                        as : "user",
+                    }
+                },
+                { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+                {
+                    $project: {
+                    _id: 1,
+                    text: "$comment",
+                    createdAt: 1,
+                        user: {
+                            // _id: "$user._id",
+                            userName: "$user.userName",
+                            profilePic: "$user.profilePic",
+                        }
+                    }
+                },
+            ],
+            as: "commentWithUser",
         }
+    },
+
+    {
+        $lookup: {
+            from:"users",
+            let: { loggedInId: new mongoose.Types.ObjectId(token?._id)},
+            pipeline: [
+                { $match: { $expr: { $ne: ["$_id", "$$loggedInId"]} }},
+                { $project: { userName: 1, profilePic: 1}},
+            ],
+            as: "allUsersExceptLoggedIn"
+        }
+    },
+
+    // Project required fields only
+    {
+            $project: {
+            videoUrl: 1,
+            title: 1,
+            createdAt: 1,
+            description: 1,
+            views: 1,
+            likes: 1,
+            commentWithUser: 1,
+            // user: 1,
+            isFollow: 1,
+            owner: {
+                userName: "$owner.userName",
+                profilePic: "$owner.profilePic"
+            },
+            LikedUser: {
+                $map: {
+                input: "$LikedUserInfo",
+                as: "o",
+                    in: {
+                        userName: "$$o.userName",
+                        profilePic: "$$o.profilePic"
+                    }
+                }
+            },
+            allUsersExceptLoggedIn: 1,
         }
     }
     ]);
 
-
-//     const videos = await Video.aggregate([
-//         { $sort: {createdAt: -1}},
-//         {
-//             $lookup: {
-//                 from: "users",   // target collection
-//                 foreignField: "user", // current collection
-//                 localField: "_id",
-//                 as: "owner",
-//             }
-//         },
-//         {
-//             $lookup: {
-//                 from: "likes",
-//                 localField: "_id",
-//                 foreignField: "video",
-//                 as: "likedUserDocs",
-//             }
-//         },
-//         {
-//             $addFields: {
-//                 likes: { $size: { $ifNull: ["$likedUserDocs", []]}},
-//                 likesUserIds: {
-//                     $map: {
-//                         input: "$likedUserDocs",
-//                         as: "like",
-//                         in: "$$like.user"
-//                     }
-//                 }
-//             }
-//         },
-//         {
-//             $lookup: {
-//                 from: "users",
-//                 localField: "likesUserIds",
-//                 foreignField: "_id",
-//                 as: "LikedUserInfo"
-//             }
-//         },
-//         // ...(token
-//         //     ? [
-//         //         {
-//         //             $lookup: {
-//         //                 from: "follows",
-//         //                 let: { videoOwner: "$user" },
-//         //                 pipeline: [
-//         //                     {
-//         //                         $match: {
-//         //                             $expr:{
-//         //                                 $and: [
-//         //                                     { $eq: ["$following", "$videoOwner"] },
-//         //                                     { $eq: ["$follower", new mongoose.Types.ObjectId(token?._id.toString())] }  // follower == logged-in user
-//         //                                 ]
-//         //                             }
-//         //                         }
-//         //                     }
-//         //                 ],
-//         //                 as: "subscriptionInfo"
-//         //             }
-//         //         }
-//         //     ]
-//         //     : [
-//         //         {
-//         //             $addFields: {
-//         //                 isFollow: false,
-//         //             }
-//         //         }
-//         //     ]),
-// // This stage is used to reshape the owner field of each video document, so it only contains: username profilePic  // Instead of returning the full user object(s).
-//         {
-//             $project: {
-//                 owner: {
-//                     $map: {
-//                         input: "$owner",
-//                         as: "o",
-//                         in: {
-//                             userName: "$$o.userName",
-//                             profilePic: "$$o.profilePic",
-//                         }
-//                     }
-//                 },
-//                 LikedUser: {
-//                     $map: {
-//                         input: "$LikedUserInfo",
-//                         as: "o",
-//                         in: {
-//                             userName: "$$o.userName",
-//                             profilePic: "$$o.profilePic",
-//                         }
-//                     }
-//                 },
-//                 videoUrl: 1,
-//                 views: 1,
-//                 likes: 1,
-//                 user: 1,
-//                 // isFollow: 1
-//             }
-//         }
-//     ])
     if(!videos || videos.length === 0) return nextError(200, "No videos uploaded yet.", []);
 
     

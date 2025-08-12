@@ -1,10 +1,10 @@
-// import mongoose, { model, models, Schema} from "mongoose";
+import mongoose from 'mongoose';
 import pkg from 'mongoose';
 const { model, models, Schema } = pkg;
 
 export interface IChat {
-    sender: string;
-    receiver: string;
+    sender: mongoose.Types.ObjectId;
+    receiver: mongoose.Types.ObjectId;
     message: string;
     image?: string;
     video?:string;
@@ -16,12 +16,14 @@ export interface IChat {
 
 const chatSchema = new Schema<IChat>({
     sender: { 
-        type: String, 
+        type: Schema.Types.ObjectId, 
+        ref: "User",
         required: true, 
         index: true 
     },  
     receiver: { 
-        type: String, 
+        type: Schema.Types.ObjectId, 
+        ref: "User", 
         required: true, 
         index: true 
     },

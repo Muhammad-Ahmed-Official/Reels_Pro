@@ -8,7 +8,7 @@ const urlEndPoints = process.env.NEXT_PUBLIC_URL_ENDPOINT!;
 export default function Provider({ children } : { children : ReactNode }) {
     
     return(
-        <SessionProvider refetchInterval={5*60}> 
+        <SessionProvider refetchInterval={5*60} refetchOnWindowFocus={false}> 
             <ImageKitProvider urlEndpoint={urlEndPoints}> {children} </ImageKitProvider> 
         </SessionProvider> 
     )

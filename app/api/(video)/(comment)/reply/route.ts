@@ -4,7 +4,7 @@ import { asyncHandler } from "@/utils/AsyncHandler";
 import { nextError, nextResponse } from "@/utils/Responses";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server"
-
+import mongoose from "mongoose";
 
 export const POST = asyncHandler(async (request:NextRequest):Promise<NextResponse> => {
     await connectionToDatabase();
@@ -17,7 +17,7 @@ export const POST = asyncHandler(async (request:NextRequest):Promise<NextRespons
 
     const reply = await Comment.create({
         comment,
-        userName: token?.userName,
+        user: new mongoose.Types.ObjectId(token._id),
         videoId,
         parentCommentId,
     })

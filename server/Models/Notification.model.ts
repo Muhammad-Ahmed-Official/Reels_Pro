@@ -9,7 +9,6 @@ export interface INotification {
     reelId?: string;
     isRead?: boolean;
     message: string;
-    // allFollower?: {};
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -18,7 +17,7 @@ export interface INotification {
 const notificationSchema = new Schema<INotification>({
     typeNotification: {
         type: String,
-        enum: ["like", "follow", "comment"],
+        enum: ["like", "follow", "comment", "video"],
         required: true,
         
     },

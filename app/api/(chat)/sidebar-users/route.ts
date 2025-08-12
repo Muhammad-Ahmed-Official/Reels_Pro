@@ -13,56 +13,54 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
     await connectionToDatabase();
 
     const leftsidebarUser = await Chat.aggregate([
-    {
-        $match: {
-            $or: [
-                { sender: new mongoose.Types.ObjectId(token._id) },
-                { receiver: new mongoose.Types.ObjectId(token._id) }
-            ]
-        }
-    },
-    // {
-    //     $addFields: {
-    //     otherUser: {
-    //         $cond: [
-    //         { $eq: ["$sender", new mongoose.Types.ObjectId(token._id)] },
-    //         "$receiver",
-    //         "$sender"
-    //         ]
-    //     }
-    //     }
-    // },
-    {
-        $lookup: {
-            from: "users",
-            localField: "sender",
-            foreignField: "_id",
-            as: "user"
-        }
-    },
-    // { $unwind: "$user" },
-    // {
-    //     $group: {
-    //     _id: "$otherUser",
-    //     user: { $first: "$user" },
-    //     latestMessage: { $first: "$message" },
-    //     createdAt: { $first: "$createdAt" }
-    //     }
-    // },
-    // {
-    //     $project: {
-    //     _id: 0,
-    //     userId: "$user._id",
-    //     name: "$user.userName",
-    //     pic: "$user.profilePic",
-    //     latestMessage: 1,
-    //     createdAt: 1
-    //     }
-    // },
-    // { $sort: { createdAt: -1 } }
+        {
+            $match: {
+                $or: [
+                    { sender: new mongoose.Types.ObjectId(token._id)},
+                    { receiver: new mongoose.Types.ObjectId(token._id)}
+                ]
+            }
+        },
+        {
+            $addFields: {
+            otherUser: {
+                $cond: [
+                { $eq: ["$sender", new mongoose.Types.ObjectId(token._id)] },
+                "$receiver",
+                "$sender"
+                ]
+            }
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "otherUser",
+                foreignField: "_id",
+                as: "user"
+            }
+        },
+        { $unwind: "$user" },
+        {
+            $group: {
+            _id: "$otherUser",
+            user: { $first: "$user" },
+            latestMessage: { $first: "$message" },
+            createdAt: { $first: "$createdAt" }
+            }
+        },
+        {
+            $project: {
+            _id: 0,
+            userId: "$user._id",
+            userName: "$user.userName",
+            profilePic: "$user.profilePic",
+            latestMessage: 1,
+            createdAt: 1
+            }
+        },
+        { $sort: { createdAt: -1 } }
     ]);
     
-    console.log(leftsidebarUser);
-
     return nextResponse(200,"", leftsidebarUser);
 });

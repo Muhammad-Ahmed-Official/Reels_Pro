@@ -19,6 +19,7 @@ const commentSchema = new Schema<Comment>({
     },
     user: {
         type: Schema.Types.ObjectId,
+        ref: "User",
         index: true,
     },
     videoId: {
