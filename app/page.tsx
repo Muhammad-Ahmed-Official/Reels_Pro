@@ -9,16 +9,16 @@ import MessagesTab from "@/components/MessagesTab"
 import CreateTab from "@/components/CreateTab"
 import ProfileTab from "@/components/ProfileTab"
 import { signOut } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import WatchLaterTab from "@/components/WatchLaterTab"
 import { useUser } from "./context/userContext"
 import { useSocket } from "./context/SocketContext"
 import Loader from "@/components/Loader"
 
-type TabType = "videos" | "notifications" | "messages" | "create" | "profile" | "logout" | "watchLater"
+type TabType = "reels" | "notifications" | "messages" | "create" | "profile" | "logout" | "watchLater"
 
 export default function ProfilePage() {
-    const [activeTab, setActiveTab] = useState<TabType>("videos");
+    const [activeTab, setActiveTab] = useState<TabType>("reels");
     const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
     const [collectionModalOpen, setCollectionModalOpen] = useState<boolean>(false);
@@ -26,22 +26,30 @@ export default function ProfilePage() {
     const { socket } = useSocket();
     const { user, loading } = useUser();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
 
     useEffect(() => {
-    const receiver = user?._id   
-    if (socket && activeTab === "notifications") {
-        socket?.emit("joinRoom", receiver);
-        socket?.emit("notif");
-    }
+        const receiver = user?._id   
+        if (socket && activeTab === "notifications") {
+            socket?.emit("joinRoom", receiver);
+            socket?.emit("notif");
+        }
     }, [socket, activeTab === "notifications"]);
 
-    
+    useEffect(() => {
+        const tabFromUrl = searchParams.get("tab") as TabType;
+        if (tabFromUrl) {
+            setActiveTab(tabFromUrl);
+        } else {
+            setActiveTab("reels");
+        }
+    }, [searchParams]);
 
     const tabs = [
-        { id: "videos" as TabType, label: "Videos", icon: Video },
+        { id: "reels" as TabType, label: "Reels", icon: Video },
         { id: "notifications" as TabType, label: "Notifications", icon: Bell },
-        { id: "messages" as TabType, label: "Messages", icon: MessageCircle },
+        { id: "messages" as TabType, label: "Chat", icon: MessageCircle },
         { id: "create" as TabType, label: "Create", icon: Plus },
         { id: "watchLater" as TabType, label: "Watch Later", icon: ListVideo },
         { id: "profile" as TabType, label: "Profile", icon: User },
@@ -50,7 +58,7 @@ export default function ProfilePage() {
 
     const renderTabContent = () => {
         switch (activeTab) {
-            case "videos":
+            case "reels":
                 return <VideosTab />
             case "notifications":
                 return <NotificationsTab />
@@ -112,7 +120,11 @@ export default function ProfilePage() {
                             setCollectionModalOpen(!collectionModalOpen);
                         } else {
                             setActiveTab(tab.id);
-                            // router.push(`/${tab.id}`, { scroll: false});
+                            if (tab?.id !== "reels") {
+                                router.push(`?tab=${tab.id}`, { scroll: false });
+                            } else {
+                                router.push("/", { scroll: false });
+                            }
                             setSidebarOpen(false);
                         }
                         }}

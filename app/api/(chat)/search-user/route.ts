@@ -56,6 +56,7 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
             $project: {
                 userName: 1,
                 profilePic: 1,
+                createdAt: 1,
                 isConnectedToLoggedInUser: 1,
             }
         },

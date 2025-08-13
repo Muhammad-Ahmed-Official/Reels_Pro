@@ -24,20 +24,18 @@ export default function AnalyticsModel({ showAnalytics, setShowAnalytics } : Ana
   if (!visible) return null;
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex items-center justify-center ms-36 
+     <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 
         ${closing ? "backdrop-close" : "backdrop-open"} bg-black/50`}>
       <div
-        className={`relative max-h-[90vh] w-[90%] max-w-5xl overflow-y-auto 
-          rounded-2xl bg-white shadow-lg 
-          ${closing ? "modal-close" : "modal-open"}`}>
+        className={`relative w-full lg:w-[75%] mt-10 mb-2 lg:ms-36 max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-lg transition-all duration-300${closing ? "modal-close" : "modal-open"}`}>
         <button
           onClick={() => setShowAnalytics(false)}
-          className="absolute right-4 top-4 rounded-full bg-gray-200 p-2 hover:bg-gray-300 cursor-pointer">
+          className="absolute right-3 top-3 rounded-full bg-gray-200 p-2 hover:bg-gray-300 cursor-pointer">
           <X />
         </button>
 
-        <div className="p-4">
+        <div className="p-3 sm:p-4 md:p-6">
           <ReelDashboard />
         </div>
       </div>

@@ -264,23 +264,25 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
     };
 
 
-
-
-    useEffect(() => {
-        const getAllComment = async() => {
-            await asyncHandlerFront(
-                async () => {
-                    const response = await apiClient.getComment(reelId)
-                    // console.log(response.data)
-                    setComment(response?.data as any);
-                }
-            ),
-            (error:any) => {
-                toast.error(error.message)
-            }
+  // console.log("CommentCount:-",commentCount)
+  useEffect(() => {
+    const getAllComment = async () => {
+      await asyncHandlerFront(
+        async () => {
+          const response = await apiClient.getComment(reelId);
+          console.log(response.data);
+          setComment(response?.data as any);
         }
-        getAllComment()
-    }, []);
+      ).catch((error: any) => {
+        toast.error(error.message);
+      });
+    };
+
+    if (isOpen && comment.length === 0) {
+      getAllComment();
+    }
+  }, [isOpen, reelId]); // run only when modal opens or reel changes
+
 
 
     useEffect(() => {
@@ -342,11 +344,11 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
                 isOpen ? "translate-y-0" : "translate-y-full"
             }`}
             >
-            <div className="relative rounded-t-2xl shadow-2xl h-[70vh] flex flex-col border-t border-white/20 backdrop-blur-xl bg-white/70 dark:bg-gray-900/70">
+            <div className="relative rounded-t-2xl shadow-2xl h-[70vh] flex flex-col border-t border-white/20 backdrop-blur-xl bg-white/70">
                 
                 {/* Animated Gradient Background */}
                 <div className="absolute inset-0 -z-10 rounded-t-2xl overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800" />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 " />
                 <div className="pointer-events-none absolute inset-0 mix-blend-multiply">
                     <div className="absolute top-[-15%] left-[10%] h-[20vmax] w-[20vmax] rounded-full bg-gradient-to-br from-fuchsia-300 via-pink-300 to-purple-300 opacity-30 blur-3xl animate-pulse" />
                     <div className="absolute bottom-[-10%] right-[5%] h-[18vmax] w-[18vmax] rounded-full bg-gradient-to-br from-indigo-300 via-sky-300 to-blue-300 opacity-30 blur-3xl animate-pulse" />
@@ -356,12 +358,12 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-white/20">
-                <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                {/* <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
                     Comments ({comment?.length || 0})
-                </h3>
+                </h3> */}
                 <button
                     onClick={onClose}
-                    className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white rounded-full hover:bg-white/30 transition">
+                    className="p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-white/30 transition cursor-pointer">
                     <X className="w-5 h-5" />
                 </button>
                 </div>
@@ -373,14 +375,12 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
                     <CommentItem key={comment?._id} comment={comment} onAddReply={onAddReply} onDeleteComment={onDeleteComment} onUpdateComment={onUpdateComment} />
                     ))
                 ) : (
-                    <p className="text-sm text-gray-500 text-center mt-8">
-                    No comments yet. Be the first!
-                    </p>
+                    <p className="text-sm text-gray-500 text-center mt-8">No comments yet. Be the first!</p>
                 )}
                 </div>
 
                 {/* Comment Input */}
-                <div className="p-4 border-t border-white/20 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md rounded-b-2xl">
+                <div className="p-4 border-t border-white/20 bg-white/40 backdrop-blur-md rounded-b-2xl">
                 <form onSubmit={handleSubmit(onSubmit)} className="flex items-center space-x-3">
                     <Image
                     src="/placeholder.svg"
@@ -395,7 +395,7 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
                         placeholder="Add a comment..."
                         disabled={isSubmitting}
                         {...register("comment")}
-                        className="w-full px-4 py-2 bg-white/60 dark:bg-gray-800/60 rounded-full text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400"
+                        className="w-full px-4 py-2 bg-white/60 rounded-full text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-400"
                     />
                     {errors.comment && (
                         <p className="text-red-500 text-xs mt-1">{errors.comment.message}</p>
@@ -403,8 +403,7 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-pink-500 hover:text-pink-600 transition disabled:text-gray-400 disabled:cursor-not-allowed"
-                    >
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-pink-500 hover:text-pink-600 transition disabled:text-gray-400 disabled:cursor-not-allowed cursor-pointer">
                         {isSubmitting ? (
                         <div className="w-4 h-4 border-2 border-pink-400 border-t-transparent rounded-full animate-spin" />
                         ) : (
@@ -443,7 +442,6 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
                     <div className="absolute inset-0 opacity-[0.05] [background-image:radial-gradient(transparent_0,transparent_70%,rgba(0,0,0,0.25)_70%)] [background-size:3px_3px]" /></div>
 
             <div className="flex items-center justify-end px-4 pt-1">
-                {/* <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">Comments ({comment?.length || 0})</h3> */}
                 <button onClick={onClose} className="cursor-pointer p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-white/30 transition-colors"> <X className="w-5 h-5" />
                 </button>
             </div>

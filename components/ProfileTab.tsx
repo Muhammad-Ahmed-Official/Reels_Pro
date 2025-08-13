@@ -148,7 +148,7 @@ const ProfileTab = () => {
       
       <div className="mx-auto max-w-7xl">
       {/* Profile Header Card */}
-        <section className="mb-4 rounded-2xl border border-white/40 bg-white/50 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl sm:mb-6">
+        <section className="mb-4 sm:mb-6 rounded-2xl border border-white/40 bg-white/50 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl">
             <div className="p-4 sm:p-6 lg:p-8">
                 <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 lg:space-x-6">
                     <div className="flex-shrink-0">

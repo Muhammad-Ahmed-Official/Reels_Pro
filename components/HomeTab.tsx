@@ -181,7 +181,7 @@ export default function ReelDashboard() {
         {kpis.map((kpi, idx) => (
           <div
             key={kpi.label}
-            className="group relative overflow-hidden rounded-xl border border-white/60 bg-white/70 p-4 backdrop-blur transition-transform duration-200 hover:-translate-y-0.5">
+            className="group relative overflow-hidden rounded-xl bg-white/70 p-4 backdrop-blur transition-transform duration-200 hover:-translate-y-0.5 border border-gray-100 shadow-md hover:shadow-xl hover:scale-[1.02]">
             <div
               className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full"
               style={{ background: `radial-gradient(${kpi.color}22, transparent 60%)` }}
@@ -207,7 +207,7 @@ export default function ReelDashboard() {
 
       {/* Main row: Overview chart + Gauge */}
       <section className="grid gap-6 lg:grid-cols-3">
-        <div className="relative overflow-hidden rounded-xl border border-white/60 bg-white/70 backdrop-blur lg:col-span-2">
+        <div className="relative overflow-hidden rounded-xl border border-gray-100 shadow-md bg-white/70 backdrop-blur lg:col-span-2">
           <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-gradient-to-br from-fuchsia-400/40 to-indigo-400/40 blur-3xl" aria-hidden="true" />
           <div className="flex items-center justify-between p-4">
             <div>
@@ -245,7 +245,7 @@ export default function ReelDashboard() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/60 bg-white/70 p-4 backdrop-blur">
+        <div className="rounded-xl border border-gray-100 shadow-md bg-white/70 p-4 backdrop-blur ">
           <h2 className="text-base font-semibold text-slate-900">Engagement Score</h2>
           <p className="text-sm text-slate-600">Overall interactions vs. reach</p>
           <div className="mt-4 flex flex-col items-center gap-4">
@@ -270,7 +270,7 @@ export default function ReelDashboard() {
 
       {/* Compact: Audience donut + Recent uploads list */}
       <section className="grid gap-6 lg:grid-cols-3">
-        <div className="rounded-xl border border-white/60 bg-white/70 p-4 backdrop-blur">
+        <div className="rounded-xl border border-gray-100 shadow-md bg-white/70 p-4 backdrop-blur">
           <h2 className="text-base font-semibold text-slate-900">Audience by Age</h2>
           <p className="text-sm text-slate-600">Viewer distribution</p>
           <div className="mt-2 h-[240px] w-full">
@@ -287,7 +287,7 @@ export default function ReelDashboard() {
           </div>
         </div>
 
-        <div className="lg:col-span-2 rounded-xl border border-white/60 bg-white/70 p-4 backdrop-blur">
+        <div className="lg:col-span-2 rounded-xl border border-gray-100 shadow-md bg-white/70 p-4 backdrop-blur">
           <h2 className="text-base font-semibold text-slate-900">Recent Uploads</h2>
           <p className="text-sm text-slate-600">Latest reels performance</p>
           <div className="mt-3 space-y-3">

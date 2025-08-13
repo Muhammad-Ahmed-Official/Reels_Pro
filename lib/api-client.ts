@@ -139,11 +139,16 @@ class ApiClient{
         })
     };
 
-
-    async getUsers(){
-        const response = await this.fetch<{data:User}>("user");
+    async getUser(){
+        const response = await this.fetch<{data: User}>("profile/updateInfo");
         return response.data;
-    };
+    }
+
+
+    // async getUsers(){
+    //     const response = await this.fetch<{data:User}>("user");
+    //     return response.data;
+    // };
 
 
 

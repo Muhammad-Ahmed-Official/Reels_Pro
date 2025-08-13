@@ -8,7 +8,7 @@ import Image from "next/image"
 import toast from "react-hot-toast"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import { useSession } from "next-auth/react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useSocket } from "@/app/context/SocketContext"
 // import { useUser } from "@/app/context/userContext"
 import { User } from "@/models/User"
@@ -63,6 +63,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const commentButtonRef = useRef<HTMLButtonElement>(null)
   const { socket } = useSocket();
   const { user } = useUser();
+  const router = useRouter();
 
 
   useEffect(() => {
@@ -182,11 +183,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const handleCheckboxChange = async(isChecked: boolean, playlistId: string, videoId: string) => {
   }
    
-   
-   // setLikes(isLiked ? likes - 1 : likes + 1)
-   //   const toggleBookmark = () => {
-   //     setIsBookmarked(!isBookmarked)
-   //   }
+  
   const handleCommentClick = () => {
     if (commentButtonRef.current) {
       const rect = commentButtonRef.current.getBoundingClientRect()
@@ -203,12 +200,9 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     setIsCommentModalOpen(false)
   }
 
-  // console.log(reel);
-
   return (
     <>
       <div className="relative w-full h-[710px] flex items-center justify-center overflow-hidden rounded-xl">
-        {/* Video */}
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
@@ -219,7 +213,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
           <source src={reel.videoUrl} type="video/mp4" />
         </video>
 
-        {/* Play/Pause Overlay */}
         <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={togglePlay}>
           {!isPlaying && (
             <div className="bg-black/50 rounded-full p-4">
@@ -244,10 +237,8 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         {/* Bottom Content */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
           <div className="flex items-end justify-between">
-            {/* Left Content */}
             <div className="flex-1 mr-4">
-              {/* User Info */}
-              <div className="flex items-center mb-3">
+              <button onClick={() => router.push('?tab=profile')} className="flex items-center mb-3 cursor-pointer">
                 <Image
                   src={reel.owner.profilePic || "/placeholder.svg"}
                   alt={reel.owner.userName}
@@ -266,12 +257,11 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                 {session?.user?._id !== reel?.owner?._id && <button onClick={handleFollow} className="ml-4 px-3 py-1 cursor-pointer border border-white rounded-full text-white text-xs font-semibold">
                   {isFollowing ? "Following" : "Follow" }
                 </button>}
-              </div>
+              </button>
               <p className="text-white text-sm sm:text-base leading-relaxed mb-2">{reel.description}</p>
             </div>
 
             <div className="flex flex-col items-center space-y-4 sm:space-y-6">
-              {/* Like */}
               <button onClick={toggleLike} className="flex flex-col items-center cursor-pointer mb-0">
                 <div className="bg-[#0000002E] rounded-full p-3 font-semibold">
                   <Heart className={`w-6 h-6 ${isLiked ? "text-red-500 fill-red-500" : "text-white"}`} />

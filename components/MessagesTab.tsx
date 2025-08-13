@@ -1,5 +1,5 @@
-import { Check, CheckCheck, ChevronDown, MessageCircleX, MessageSquare, Send, Trash2, UserRoundPen, X} from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Check, CheckCheck, ChevronDown, LucideUser, MessageCircleX, MessageSquare, Send, Trash2, UserRoundPen, X} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import FileUpload from "./FileUplod";
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler";
@@ -11,9 +11,33 @@ import Image from "next/image";
 import { useSocket } from "@/app/context/SocketContext";
 import { useUser } from "@/app/context/userContext";
 
+function SidebarSkelton() {
+  const skeletonContacts = Array(8).fill(null);
+
+  return (
+    <aside className="h-full w-20 lg:w-72 border-gray-200 flex flex-col transition-all duration-200">
+      <div className="overflow-y-auto w-full py-3 space-y-3">
+        {skeletonContacts.map((_, idx) => (
+          <div
+            key={idx}
+            className="flex items-center gap-3 px-3 py-2">
+            <div className="w-12 h-12 rounded-full bg-gray-300 animate-pulse flex-shrink-0" />
+
+            <div className="hidden lg:flex flex-col gap-2 flex-1">
+              <div className="h-4 w-48 bg-gray-300 rounded animate-pulse" />
+              <div className="h-3 w-28 bg-gray-300 rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+
+
 
 const MessagesTab = () => {
-
   const { setValue, watch } = useForm({
   })
 
@@ -41,12 +65,13 @@ const MessagesTab = () => {
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editedText, setEditedText] = useState('');
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-
+  const [loading, setLoading] = useState<boolean>(false);
   // console.log("onlineUsers:-",onlineUsers);
 
   useEffect(() => {
     const searchUser = async () => {
       if(debouncedSearch){
+        setLoading(true);
         await asyncHandlerFront(
           async () => {
             const response = await apiClient.searchUserChat(debouncedSearch);
@@ -56,6 +81,7 @@ const MessagesTab = () => {
             toast.error(error.message || "Something went wrong");
           }
         )
+        setLoading(false);
       }
     };
 
@@ -65,6 +91,7 @@ const MessagesTab = () => {
 
   useEffect(() => {
     const getAllUsers = async() => {
+      setLoading(true);
       await asyncHandlerFront(
         async() => {
           const response = await apiClient.sidebarUsers();
@@ -74,6 +101,7 @@ const MessagesTab = () => {
           toast.error(error.message || "Something went wrong");
         }
       )
+      setLoading(false);
     }
     getAllUsers()
   }, [])
@@ -107,6 +135,20 @@ const MessagesTab = () => {
       receiver:  user?._id,
       message: messageInput,
     };
+
+    socket?.emit("checkRoomPresence", activeUser._id, (isPresent: boolean) => {
+      console.log(activeUser?._id, "*****")
+      console.log(isPresent)
+      if (isPresent) {
+        setMessages(prevMessages =>
+          prevMessages.map(msg =>
+            // console.log(msg)
+            msg.sender === activeUser._id ? { ...msg, seen: true } : msg
+          )
+        );
+      }
+    });
+
 
     socket?.emit("message", payload);
     setMessages((prev) => [...prev, { ...payload, sender: activeUser?._id }]);
@@ -222,7 +264,18 @@ const MessagesTab = () => {
     if(user?._id) socket?.emit("seenMsg", user?._id)
   }
 
-  // console.log(messages);
+  const chatContainerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const [showChat, setShowChat] = useState(false);
+
+
+
+  // console.log(users);
 
   
   return (
@@ -230,7 +283,7 @@ const MessagesTab = () => {
       <h2 className="text-2xl font-bold mb-4 ml-14 lg:ml-0">Messages{activeUser?.userName && `/${activeUser?.userName?.charAt(0)?.toUpperCase() + activeUser.userName?.slice(1)}`}</h2>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
         {/* Sidebar */}
-        <div className="lg:col-span-1">
+        <div className={`${showChat ? "hidden" : "block"} lg:block lg:col-span-1`}>
           <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-md border border-gray-200 h-full overflow-y-auto">
             <div className="card-body">
               <h3 className="card-title mb-4">Conversations</h3>
@@ -253,76 +306,80 @@ const MessagesTab = () => {
                   </button>
                 )}
               </div>
-              <div className="space-y-2">
-                {users?.map((user: any) => {
-                  const isActive = activeUser?._id === user?.userId;
-
-                  const formatTime = (dateString: string) => {
-                    const date = new Date(dateString);
-                    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-                  };
-
-                  return (
-                    <div
-                      key={user?.userId}
-                      className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
-                        isActive
-                          ? "bg-gradient-to-r from-purple-400 to-pink-400 text-white shadow-md"
-                          : "hover:bg-white/60 hover:shadow-sm"
-                      }`}
-                      onClick={() => {
-                        setActiveUser({
-                          _id: user?.userId,
-                          userName: user?.userName,
-                          profilePic: user.profilePic
-                        });
-                        socket?.emit("joinRoom", user?.userId);
-                        handleSeen();
-                      }}
-                    >
-                      {/* Left Section: Avatar + Name + Last Message */}
-                      <div className="flex items-center space-x-3 overflow-hidden">
-                        <div className="relative w-12 h-12 flex-shrink-0">
-                          <Image
-                            src={user.profilePic}
-                            alt="profilePic"
-                            width={48}
-                            height={48}
-                            className="object-cover w-full h-full rounded-full border border-gray-200"
-                          />
-                          {onlineUsers?.includes(user.userId) && (
-                            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />
-                          )}
-                        </div>
-
-                        <div className="min-w-0">
-                          <div className="font-semibold truncate">{user?.userName?.charAt(0)?.toUpperCase() + user?.userName?.slice(1)}</div>
-                          <div className={`text-sm truncate ${isActive ? "text-white/80" : "text-gray-500"}`}>
-                            {user?.latestMessage?.length > 25
-                              ? user.latestMessage.slice(0, 25) + "..."
-                              : user.latestMessage || "No messages yet"}
-                          </div>
-                        </div>
+            {loading ? <SidebarSkelton /> : <div className="space-y-2">
+              {users?.map((users: any) => {
+                const isActive = activeUser?._id === users?.userId || users?._id;
+                const formatTime = (dateString: string) => {
+                  const date = new Date(dateString);
+                  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+                };
+                return (
+                  <div
+                    key={users?.userId || users?._id}
+                    className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${
+                      isActive
+                        ? "bg-gradient-to-r from-purple-400 to-pink-400 text-white shadow-md"
+                        : "hover:bg-white/60 hover:shadow-sm"
+                    }`}
+                    onClick={() => {
+                      setActiveUser({
+                        _id: users?.userId || users?._id,
+                        userName: users?.userName,
+                        profilePic: users.profilePic
+                      });
+                      socket?.emit("joinRoom", users?.userId || users?._id);
+                      handleSeen();
+                      setShowChat(true);
+                    }}>
+                    {/* Left Section: Avatar + Name + Last Message */}
+                    <div className="flex items-center space-x-3 overflow-hidden">
+                      <div className="relative w-12 h-12 flex-shrink-0">
+                        <Image
+                          src={users.profilePic}
+                          alt="profilePic"
+                          width={48}
+                          height={48}
+                          className="object-cover w-full h-full rounded-full border border-gray-200"
+                        />
+                        {onlineUsers?.includes( users?.userId || users?._id) && (
+                          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />
+                        )}
                       </div>
 
-                      {/* Right Section: Time */}
-                      <div className={`text-xs ${isActive ? "text-white/80" : "text-gray-400"}`}>
-                        {formatTime(user.createdAt)}
+                      <div className="min-w-0">
+                        <div className="font-semibold truncate">{users?.userName?.charAt(0)?.toUpperCase() + users?.userName?.slice(1)}</div>
+                        <div className={`text-sm truncate ${isActive ? "text-white/80" : "text-gray-500"}`}>
+                          {users?.latestMessage?.length
+                            ? users.latestMessage.slice(0, 25) + "..."
+                            : users.latestMessage || "No messages yet"}
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Right Section: Time */}
+                    <div className={`text-xs ${isActive ? "text-white/80" : "text-gray-400"}`}>
+                      {formatTime(users.createdAt)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>}
             </div>
           </div>
         </div>
 
         {/* Chat Area */}
-        <div className="lg:col-span-2">
+        <div className={`${showChat ? "block" : "hidden"} lg:block lg:col-span-2`}>
           <div className="bg-white/70 backdrop-blur-lg rounded-2xl shadow-md border border-gray-200 h-full flex flex-col">
           {activeUser?.userName && <div className="p-3 border-b border-gray-200 flex items-center justify-between">
             <div className="w-full flex items-center justify-between">
               <div className="flex items-center gap-x-3">
+                  <button 
+                  className="lg:hidden p-2 rounded-full hover:bg-gray-200"
+                  onClick={() => setShowChat(false)} // This will hide chat and show sidebar
+                >
+                  <ArrowLeft />
+                </button>
                 <div className="avatar">
                     <div className="avatar placeholder w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
                       <Image src={activeUser?.profilePic} alt="profilePic" width={40} height={40} className="object-cover w-full h-full" />
@@ -341,18 +398,19 @@ const MessagesTab = () => {
                   socket?.emit("leaveRoom", activeUser?._id);
                   socket?.off("seenMsg", activeUser?._id as any);
                   setActiveUser({ _id: "", userName: "", profilePic: "" });
+                  setShowChat(false)
                 }} className='cursor-pointer'> <MessageCircleX /> 
               </button>
             </div>
           </div>}
             <div className="card-body flex flex-col h-full">
               {activeUser?.userName ? (
-                <div className="flex-1 flex flex-col gap-2 overflow-y-auto h-auto pr-2">
+                <div ref={chatContainerRef} className="flex-1 flex flex-col gap-2 overflow-y-auto pr-2 max-h-[calc(100vh-300px)]">
                   {messages?.map((msg, i) => {
-                  const isOwn = msg.sender !== user?.userId;
+                    const isOwn = msg?.sender !== user?._id;
                   return (
                     <div
-                      key={msg?._id}
+                      key={i}
                       className={`flex items-end gap-2 group ${ isOwn ? "justify-end" : "justify-start"}`}>
 
                       <div className={`relative max-w-[75%]`}>
@@ -461,7 +519,7 @@ const MessagesTab = () => {
                 })}
                 </div>
               ) : (
-                 <div className="w-full flex flex-1 flex-col items-center justify-center p-16 bg-base-100/50">
+                 <div className="hidden w-full md:flex flex-1 flex-col items-center justify-center p-16 bg-base-100/50">
                     <div className="max-w-md text-center space-y-6">
                       <div className="flex justify-center gap-4 mb-4">
                         <div className="relative">
@@ -500,23 +558,31 @@ const MessagesTab = () => {
                   </div>
                 )}
 
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    value={messageInput}
-                    onChange={(e) => {
-                      setMessageInput(e.target.value);
-                      handleTyping()
-                    }}
-                    placeholder="Type a message..."
-                    className="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition"
+                <div className="flex items-center gap-1 flex-wrap sm:flex-nowrap">
+                    <input
+                      type="text"
+                      value={messageInput}
+                      onChange={(e) => {
+                        setMessageInput(e.target.value);
+                        handleTyping();
+                      }}
+                      placeholder="Type a message..."
+                      className="flex-1 min-w-[150px] px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition"
                     />
-                  <button onClick={handleSendMessage} className="bg-gradient-to-r from-purple-400 to-pink-400 text-white p-2 rounded-full shadow hover:shadow-lg transition cursor-pointer"> <Send size={19} /> </button>
-                  <FileUpload
-                    fileType="image"
-                    onSuccess={(res) => setValue("image", res.url)}
-                  />
-                </div>
+
+                    <button
+                      onClick={handleSendMessage}
+                      className="bg-gradient-to-r from-purple-400 to-pink-400 text-white p-2 rounded-full shadow hover:shadow-lg transition cursor-pointer"
+                    >
+                      <Send size={19} />
+                    </button>
+
+                    <FileUpload
+                      fileType="image"
+                      onSuccess={(res) => setValue("image", res.url)}
+                    />
+                  </div>
+
               </div>}
             </div>
           </div>

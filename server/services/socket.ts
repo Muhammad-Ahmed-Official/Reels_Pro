@@ -48,6 +48,12 @@ export class SocketService {
                 console.log(`Socket ${socket.id} joined room ${chatId}`);
             });
 
+            // socket.on("joinRoom", ({ userId1, userId2 }) => {
+            //     const roomId = [userId1, userId2].sort().join("_");
+            //     socket.join(roomId);
+            //     console.log(`Socket ${socket.id} joined room ${roomId}`);
+            // });
+
             socket.on("leaveRoom", ( chatId ) => {
                 socket.leave(chatId);
                 console.log(`User ${userId} left room ${chatId}`);
@@ -114,8 +120,17 @@ export class SocketService {
             });
 
 
+            socket.on("checkRoomPresence", (receiverId: string, callback) => {
+                console.log(receiverId)
+                // Check if the receiver is in the online users map
+                const isOnline = this.userSocketMap.has(receiverId);
+                console.log(isOnline)
+                callback(isOnline);
+            });
+
+
             socket.on("seenMsg", async(sender) => {
-                // console.log(sender, "sender");
+                console.log("seen connected");
                 if(!sender) return;
                 io.to(sender).emit("seenMsg", sender);
                 try {
@@ -155,14 +170,3 @@ export class SocketService {
         return this._io;
     }
 }
-
-          // const fanoutQueue = `fanout`;
-            // channel.assertQueue(fanoutQueue, { durable: true });
-            // channel.bindQueue(fanoutQueue, "fanout_notif", "")
-            // channel.consume(fanoutQueue, (msg) => {
-            //     if(msg){
-            //         const notif =  JSON.parse(msg.content.toString());
-            //         socket.emit("notification", notif);
-            //         channel.ack(msg); 
-            //     }
-            // })

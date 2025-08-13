@@ -158,6 +158,7 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
             // user: 1,
             isFollow: 1,
             owner: {
+                _id: "$owner._id",
                 userName: "$owner.userName",
                 profilePic: "$owner.profilePic"
             },
