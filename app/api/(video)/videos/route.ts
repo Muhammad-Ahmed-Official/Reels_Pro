@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { getToken } from "next-auth/jwt";
 import { Playlist } from "@/models/Playlist";
+import { pipeline } from "stream";
 
 export const GET = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
     const token = await getToken({ req: request });
@@ -40,34 +41,30 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
     {
         $lookup: {
             from: "likes",
-            localField: "_id",
             foreignField: "video",
+            localField: "_id",
             as: "likedUserDocs"
         }
     },
     {
         $addFields: {
         likes: { $size: { $ifNull: ["$likedUserDocs", []] } },
-        likesUserIds: {
-            $map: {
-                input: "$likedUserDocs",
-                as: "like",
-                in: "$$like.user"
-            }
-        }
-        }
-    },
-
-    // ✅ 3. Get liked user info
-    {
-        $lookup: {
-        from: "users",
-        localField: "likesUserIds",
-        foreignField: "_id",
-        as: "LikedUserInfo"
+            isLiked: {
+                $gt: [
+                    {
+                        $size: {
+                            $filter: {
+                                input: "$likedUserDocs",
+                                as: "like",
+                                cond: { $in: [ new mongoose.Types.ObjectId(token?._id), "$$like.users" ] }
+                            }
+                        }
+                    },
+                    0
+                ]
+            } 
         }
     },
-
     // ✅ 4. Check if logged-in user follows video uploader
     {
         $lookup: {
@@ -132,7 +129,6 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
             as: "commentWithUser",
         }
     },
-
     {
         $lookup: {
             from:"users",
@@ -144,10 +140,38 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
             as: "allUsersExceptLoggedIn"
         }
     },
-
+    {
+        $lookup: {
+            from: "playlists",
+            let: { videoId: "$_id", loggedInUserId: new mongoose.Types.ObjectId(token._id) },
+            pipeline: [
+                {
+                    $match: {
+                        $expr: {
+                            $and: [
+                                { $eq: ["$user", "$$loggedInUserId"]},
+                                { $in: ["$$videoId", "$videos"] },
+                            ]
+                        }
+                    }
+                },
+                // { $limit: 1 } 
+            ],
+            as: "userPlaylistMatches"
+        },
+    },
+    {
+        $addFields: {
+            savedVideo: { $gt: [{ $size: "$userPlaylistMatches" }, 0] }
+        }
+    },
+    {
+      $unset: "userPlaylistMatches"
+    },
     // Project required fields only
     {
             $project: {
+            savedVideo: 1,
             videoUrl: 1,
             title: 1,
             createdAt: 1,
@@ -162,24 +186,14 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
                 userName: "$owner.userName",
                 profilePic: "$owner.profilePic"
             },
-            LikedUser: {
-                $map: {
-                input: "$LikedUserInfo",
-                as: "o",
-                    in: {
-                        userName: "$$o.userName",
-                        profilePic: "$$o.profilePic"
-                    }
-                }
-            },
+            // likes: 1,
+            isLiked: 1,
             allUsersExceptLoggedIn: 1,
         }
     }
     ]);
 
     if(!videos || videos.length === 0) return nextError(200, "No videos uploaded yet.", []);
-
-    
     return nextResponse(201, "Videos get successfully", videos); 
 })
 

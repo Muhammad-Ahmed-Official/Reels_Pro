@@ -30,11 +30,11 @@ export type ChatData = IChat
 export type VideoFormData = IVideo & {
     _id: string;
     owner: IUserInfo;
-    isLikedVideo?: boolean;
+    isLiked?: boolean;
     commentWithUser: Comment[];
-    likesCount: number;
+    likes?: number;
     isFollow: boolean;
-    isSaved: boolean;
+    savedVideo?: boolean;
     allUsersExceptLoggedIn?: [
         {
             _id:string,
@@ -293,8 +293,16 @@ class ApiClient{
 
 
 
-    async deleteSaved(id:string){
-        return this.fetch(`save-video?id=${id}`, {
+    async deleteSavedVideo(collectionId:string, id:string){
+        return this.fetch('save-video', {
+            method: "DELETE",
+            body: {collectionId, id}
+        })
+    }
+
+
+    async deletePlaylist(id:string){
+        return this.fetch(`playlistCollection?id=${id}`, {
             method: "DELETE",
         })
     }

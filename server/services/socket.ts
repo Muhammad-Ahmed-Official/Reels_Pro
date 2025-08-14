@@ -48,29 +48,17 @@ export class SocketService {
                 console.log(`Socket ${socket.id} joined room ${chatId}`);
             });
 
-            // socket.on("joinRoom", ({ userId1, userId2 }) => {
-            //     const roomId = [userId1, userId2].sort().join("_");
-            //     socket.join(roomId);
-            //     console.log(`Socket ${socket.id} joined room ${roomId}`);
-            // });
 
             socket.on("leaveRoom", ( chatId ) => {
                 socket.leave(chatId);
                 console.log(`User ${userId} left room ${chatId}`);
             });
 
-            // Start consumer ONCE
-
-            socket.on("notif", () => {
-                consumeNotifications(io);
-            })
 
 
             socket.on("message", async (data) => {
                 const { sender, receiver, message } = data;
-                // console.log(receiver);
                 if (!receiver) return;
-
                 const payload = { sender, receiver, message };
                 io.to(receiver).emit("newMessage", payload);
                 try {
@@ -120,15 +108,6 @@ export class SocketService {
             });
 
 
-            socket.on("checkRoomPresence", (receiverId: string, callback) => {
-                console.log(receiverId)
-                // Check if the receiver is in the online users map
-                const isOnline = this.userSocketMap.has(receiverId);
-                console.log(isOnline)
-                callback(isOnline);
-            });
-
-
             socket.on("seenMsg", async(sender) => {
                 console.log("seen connected");
                 if(!sender) return;
@@ -140,6 +119,12 @@ export class SocketService {
                 }
             });
 
+            
+            
+            // Start consumer ONCE
+            socket.on("notif", () => {
+                consumeNotifications(io);
+            })
 
             socket?.on("reel", async(data) => {
                 try {
@@ -170,3 +155,11 @@ export class SocketService {
         return this._io;
     }
 }
+
+ // socket.on("checkRoomPresence", (receiverId: string, callback) => {
+//     console.log(receiverId)
+//     // Check if the receiver is in the online users map
+//     const isOnline = this.userSocketMap.has(receiverId);
+//     console.log(isOnline)
+//     callback(isOnline);
+// });

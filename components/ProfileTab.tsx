@@ -1,5 +1,8 @@
+// const { themeMode, setThemeMode } = useTheme();
+// const isDark = themeMode === "dark";
+// import useTheme from "@/app/context/themeContext"
+
 import useProfile from "@/app/context/profileContext"
-import useTheme from "@/app/context/themeContext"
 import { apiClient } from "@/lib/api-client"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import { BarChart2, Eye, Heart, Loader2, MapPin, Users, Video } from "lucide-react"
@@ -33,32 +36,22 @@ const ProfileTab = () => {
         twoFactor: false,
     })
 
-    const [savedSettings, setSavedSettings] = useState(tempSetting);
-    const toggleSetting = (key: keyof typeof tempSetting) => {
-    setTempSetting(prev => ({
-        ...prev,
-        [key]: !prev[key]
-    }));
-    };
+    // const [savedSettings, setSavedSettings] = useState(tempSetting);
+    // const toggleSetting = (key: keyof typeof tempSetting) => {
+    // setTempSetting(prev => ({
+    //     ...prev,
+    //     [key]: !prev[key]
+    // }));
+    // };
 
     const { profileMode, setProfileMode } = useProfile();
-    const { themeMode, setThemeMode } = useTheme();
-
     const isPublic = profileMode === "public";
-    const isDark = themeMode === "dark";
+
 
     const [userInfo, setUserInfo] = useState<ProfileData>({} as ProfileData);
     const [location, setLocation] = useState('');
     const [showAnalytics, setShowAnalytics] = useState<boolean>(false);
     const [updatePassword, setUpdatePassword] = useState<boolean>(false);
-
-    // const handleSave = () => {
-    //     setSavedSettings(tempSetting);
-    //     setProfileMode(savedSettings.isPublic ? "private" : "public");
-    //     setThemeMode(savedSettings.darkMode ? "light" : "dark");
-    //     toast.success("Updated changes successfully")
-    // }
-
 
     useEffect(() => {
         const getInfo = async () => {
@@ -165,7 +158,6 @@ const ProfileTab = () => {
                     <div className="flex-1 text-center sm:text-left">
                         <h3 className="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl"> {userInfo?.currentUser?.userName?.slice(0,1).toUpperCase() +userInfo?.currentUser?.userName?.slice(1)} </h3>
                         <p className="text-sm text-gray-600 sm:text-base"> @{userInfo?.currentUser?.userName} </p>
-                        {/* <p className="mt-2 max-w-2xl text-sm text-gray-700 sm:text-base"> Content creator and developer passionate about technology and design.</p> */}
                         <div className="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                             <span className="inline-flex items-center gap-1 rounded-full bg-white/60 px-2 py-1 text-xs text-gray-700 backdrop-blur">
                             <MapPin className="h-3.5 w-3.5 text-indigo-600" />
@@ -264,8 +256,6 @@ const ProfileTab = () => {
       ))}
     </div>
   </div>
-
-    )
+  )
 }
-
 export default ProfileTab

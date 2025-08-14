@@ -17,7 +17,7 @@ export default function AnalyticsModel({ showAnalytics, setShowAnalytics } : Ana
       setClosing(false);
     } else if (visible) {
       setClosing(true);
-      setTimeout(() => setVisible(false), 300); // matches animation duration
+      setTimeout(() => setVisible(false), 300);
     }
   }, [showAnalytics]);
 

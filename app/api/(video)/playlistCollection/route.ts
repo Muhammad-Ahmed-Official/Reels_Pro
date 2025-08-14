@@ -1,10 +1,26 @@
-// import { connectionToDatabase } from "@/lib/db";
-// import { Playlist } from "@/models/Playlist";
-// import { asyncHandler } from "@/utils/AsyncHandler";
-// import { nextError, nextResponse } from "@/utils/Responses";
-// import { getToken } from "next-auth/jwt";
-// import { NextRequest, NextResponse } from "next/server";
-// import mongoose, { Types } from "mongoose";
+import { connectionToDatabase } from "@/lib/db";
+import { Playlist } from "@/models/Playlist";
+import { asyncHandler } from "@/utils/AsyncHandler";
+import { nextError, nextResponse } from "@/utils/Responses";
+import { getToken } from "next-auth/jwt";
+import { NextRequest, NextResponse } from "next/server";
+import mongoose, { Types } from "mongoose";
+
+
+export const DELETE = asyncHandler(async(request:NextRequest):Promise<NextResponse> => {
+    const token = await getToken({ req: request });
+    if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
+
+    await connectionToDatabase();
+
+    const { searchParams } = new URL(request?.url);
+    const id = searchParams.get("id");
+    if(!id) return nextError(400, "Missing field");
+
+    await Playlist.findOneAndDelete({_id: id});
+
+    return nextResponse(200, "");
+})
 
 // export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse> => {
 //     const token = await getToken({ req: request });

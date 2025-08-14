@@ -1,6 +1,6 @@
 export default function Loader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
+    <div className="min-h-screen flex items-center justify-center ">
       <div className="relative h-12 w-12"> {/* Increased size here */}
         
         {/* Outer Glow Ring */}
@@ -15,3 +15,4 @@ export default function Loader() {
     </div>
   )
 }
+// bg-gradient-to-br from-purple-50 to-pink-50

@@ -2,14 +2,12 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { X, Heart, Send, MoreHorizontal } from "lucide-react"
+import { X,  Send} from "lucide-react"
 import Image from "next/image"
-// import { Comment } from "@/models/Comment"
 import { useForm } from "react-hook-form"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import toast from "react-hot-toast"
 import { apiClient } from "@/lib/api-client"
-import { useParams } from "next/navigation"
 import { useUser } from "@/app/context/userContext"
 
 interface Comment {
@@ -358,13 +356,9 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-white/20">
-                {/* <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
-                    Comments ({comment?.length || 0})
-                </h3> */}
-                <button
-                    onClick={onClose}
-                    className="p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-white/30 transition cursor-pointer">
-                    <X className="w-5 h-5" />
+
+                <button onClick={onClose} className="p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-white/30 transition cursor-pointer">
+                  <X className="w-5 h-5" />
                 </button>
                 </div>
 

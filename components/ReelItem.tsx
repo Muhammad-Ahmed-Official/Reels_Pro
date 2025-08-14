@@ -10,8 +10,6 @@ import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import { useSession } from "next-auth/react"
 import { useParams, useRouter } from "next/navigation"
 import { useSocket } from "@/app/context/SocketContext"
-// import { useUser } from "@/app/context/userContext"
-import { User } from "@/models/User"
 import { useUser } from "@/app/context/userContext"
 
 const formatNumber = (num: number): any => {
@@ -47,18 +45,14 @@ function getDaysAgo(input?: string | Date) {
 const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
-  const [isLiked, setIsLiked] = useState(reel.isLikedVideo)
-  const [isBookmarked, setIsBookmarked] = useState(reel.isSaved);
+  const [isLiked, setIsLiked] = useState(reel.isLiked)
+  const [isBookmarked, setIsBookmarked] = useState(reel?.savedVideo);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const [commentButtonPosition, setCommentButtonPosition] = useState<{ x: number; y: number } | undefined>()
   const [isFollowing, setIsFollowing] = useState(reel?.isFollow);
   const { id } = useParams();
   const { data: session } = useSession();
   const [showModal, setShowModal] = useState<boolean>(false);
-  // const [users, setUsers] = useState<User[]>([]);
-  // const [showComments, setShowComments] = useState(false);
-  // const [playlistName, setPlaylistName] = useState<PlaylistFormData[]>([]);
-  // const [likes, setLikes] = useState(reel.likes)
   const videoRef = useRef<HTMLVideoElement>(null)
   const commentButtonRef = useRef<HTMLButtonElement>(null)
   const { socket } = useSocket();
@@ -124,13 +118,12 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   }
 
 
-  const toggleBookmark = async() => {
+  const toggleBookmark = async(id:string) => {
     setIsBookmarked(!isBookmarked)
     await asyncHandlerFront(
       async() => {
-        await apiClient.saveVideo(id?.toString()!);
+        await apiClient.saveVideo(id);
         toast.success(!isBookmarked ? "Video saved successfully" : "Video unsaved successfully");
-        // sendNotification("like", !isBookmarked ? "Video saved successfully" : "Video unsaved successfully");
       }, 
       (error) => {
         toast.error(error.message)
@@ -266,7 +259,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                 <div className="bg-[#0000002E] rounded-full p-3 font-semibold">
                   <Heart className={`w-6 h-6 ${isLiked ? "text-red-500 fill-red-500" : "text-white"}`} />
                 </div>
-                <span className="text-white text-xs sm:text-sm font-medium my-2">{formatNumber(reel.likesCount)}</span>
+                <span className="text-white text-xs sm:text-sm font-medium my-2">{formatNumber(reel.likes as number)}</span>
               </button>
 
               {/* Comment */}
@@ -286,7 +279,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
               </button>
 
               {/* Bookmark */}
-              <button onClick={toggleBookmark} className="flex flex-col items-center cursor-pointer">
+              <button onClick={() => toggleBookmark(reel?._id)} className="flex flex-col items-center cursor-pointer">
                 <div className="bg-[#0000002E] rounded-full p-3 font-semibold">
                   <Bookmark
                     className={`w-6 h-6 sm:w-7 sm:h-7 ${isBookmarked ? "text-yellow-500 fill-yellow-500" : "text-white"}`}
@@ -360,7 +353,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         isOpen={isCommentModalOpen}
         onClose={closeCommentModal}
         reelId={reel._id}
-        // commentCount={reel?.commentWithUser}
         position={commentButtonPosition}
       />
     </>

@@ -5,6 +5,7 @@ import { nextError, nextResponse } from "@/utils/Responses";
 import mongoose from "mongoose";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 
 export const POST = asyncHandler(async (request:NextRequest):Promise<NextResponse> => {
     const token = await getToken({ req: request });
@@ -20,7 +21,8 @@ export const POST = asyncHandler(async (request:NextRequest):Promise<NextRespons
     if(!savedPlaylists){
         await Playlist.create({
             user: new mongoose.Types.ObjectId(token._id), videos: [videoId]
-        })
+        });
+        return nextResponse(200, "Video saved successfully")
     };
     
     const isPresentVideo = savedPlaylists.videos.some((v:string) => v.toString() === videoId);
@@ -42,7 +44,7 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
     await connectionToDatabase();
     
     const getPlaylist = await Playlist.find({user: token._id});
-    if(!getPlaylist || getPlaylist.length === 0) return nextError(400, "No playlist found");
+    if(!getPlaylist || getPlaylist.length === 0) return nextResponse(200, "No playlist found");
 
     const playlistWithVideo = await Playlist.aggregate([
         { $match: { user: new mongoose.Types.ObjectId(token._id)}},
@@ -79,13 +81,17 @@ export const GET = asyncHandler(async (request:NextRequest):Promise<NextResponse
 
 
 
-
-export const DELETE = asyncHandler(async (request:NextRequest):Promise<NextResponse> => {
+export const DELETE = asyncHandler(async(request:NextRequest):Promise<NextResponse> => {
     const token = await getToken({ req: request });
     if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
-    
+
     await connectionToDatabase();
 
-    await Playlist.findOneAndDelete({ user: token._id });
-    return nextResponse(200, "Playlist deleted successfully");
+    const { collectionId, id } = await request.json();
+    if(!collectionId || !id) return nextError(400, "Missing field");
+    await Playlist.updateOne(
+        { _id: new ObjectId(collectionId) },
+        { $pull: { videos: new ObjectId(id)  } }
+    );
+    return nextResponse(200, "Video deleted successfully");
 })

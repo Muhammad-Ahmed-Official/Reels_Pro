@@ -66,7 +66,6 @@ const MessagesTab = () => {
   const [editedText, setEditedText] = useState('');
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  // console.log("onlineUsers:-",onlineUsers);
 
   useEffect(() => {
     const searchUser = async () => {
@@ -136,18 +135,18 @@ const MessagesTab = () => {
       message: messageInput,
     };
 
-    socket?.emit("checkRoomPresence", activeUser._id, (isPresent: boolean) => {
-      console.log(activeUser?._id, "*****")
-      console.log(isPresent)
-      if (isPresent) {
-        setMessages(prevMessages =>
-          prevMessages.map(msg =>
-            // console.log(msg)
-            msg.sender === activeUser._id ? { ...msg, seen: true } : msg
-          )
-        );
-      }
-    });
+    // socket?.emit("checkRoomPresence", activeUser._id, (isPresent: boolean) => {
+    //   console.log(activeUser?._id, "*****")
+    //   console.log(isPresent)
+    //   if (isPresent) {
+    //     setMessages(prevMessages =>
+    //       prevMessages.map(msg =>
+    //         // console.log(msg)
+    //         msg.sender === activeUser._id ? { ...msg, seen: true } : msg
+    //       )
+    //     );
+    //   }
+    // });
 
 
     socket?.emit("message", payload);
