@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { getToken } from "next-auth/jwt";
 import { Playlist } from "@/models/Playlist";
-import { pipeline } from "stream";
+
 
 export const GET = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
     const token = await getToken({ req: request });
@@ -179,14 +179,12 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
             views: 1,
             likes: 1,
             commentWithUser: 1,
-            // user: 1,
             isFollow: 1,
             owner: {
                 _id: "$owner._id",
                 userName: "$owner.userName",
                 profilePic: "$owner.profilePic"
             },
-            // likes: 1,
             isLiked: 1,
             allUsersExceptLoggedIn: 1,
         }
@@ -196,6 +194,7 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
     if(!videos || videos.length === 0) return nextError(200, "No videos uploaded yet.", []);
     return nextResponse(201, "Videos get successfully", videos); 
 })
+
 
 
 
@@ -223,18 +222,21 @@ export const POST = asyncHandler(async (request: NextRequest):Promise<NextRespon
         user: new mongoose.Types.ObjectId(session.user._id),
     }
     const newVideo = await Video.create(videoData);
-    // console.log(newVideo);
     return nextResponse(201, newVideo);
 })
 
 
 
-export const DELETE = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
-    await connectionToDatabase();
 
+export const DELETE = asyncHandler(async (request: NextRequest):Promise<NextResponse> => {
+    const token = await getToken({ req: request });
+    if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
+    
     const { videoId } = await request.json();
     if(!videoId) return nextError(404, "Video ID is required");
-
+    
+    await connectionToDatabase();
+    
     const video = await Video.findById(videoId);
     if(!video) return nextError(404, "Video not found");
 
@@ -251,4 +253,23 @@ export const DELETE = asyncHandler(async (request: NextRequest):Promise<NextResp
     if(!videoResult || !commentResult || !likeResult || playlistUpdateResult) return nextError(404, "Error in deleting Video");
 
     return nextResponse(200,"Video Delete Succesfully!");
+})
+
+
+
+export const PUT = asyncHandler(async (request:NextRequest):Promise<NextResponse> => {
+    const token = await getToken({ req: request });
+    if(!token || !token?._id) return nextError(401, "Unauthorized: Token not found");
+
+    await connectionToDatabase();
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    await Video.updateOne(
+        {_id: id},
+        { $inc: { views: 1} },
+    );
+
+    return nextResponse(200,"");
 })

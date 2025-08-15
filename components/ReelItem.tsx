@@ -1,14 +1,14 @@
 "use client"
 
 import { apiClient, type PlaylistFormData, type VideoFormData } from "@/lib/api-client"
-import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Play, VolumeX, Volume2, X, Share2 } from "lucide-react"
+import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Play, VolumeX, Volume2, X, Share2, Eye } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import CommentModal from "./CommentModal"
 import Image from "next/image"
 import toast from "react-hot-toast"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
 import { useSession } from "next-auth/react"
-import { useParams, useRouter } from "next/navigation"
+import {  useRouter } from "next/navigation"
 import { useSocket } from "@/app/context/SocketContext"
 import { useUser } from "@/app/context/userContext"
 
@@ -50,7 +50,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const [commentButtonPosition, setCommentButtonPosition] = useState<{ x: number; y: number } | undefined>()
   const [isFollowing, setIsFollowing] = useState(reel?.isFollow);
-  const { id } = useParams();
   const { data: session } = useSession();
   const [showModal, setShowModal] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -59,22 +58,27 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   const { user } = useUser();
   const router = useRouter();
 
+  // useEffect(() => {
+  //   if (isActive && videoRef.current) {
+  //     // videoRef.current.play()
+  //     // setIsPlaying(true)
+  //   } else if (videoRef.current) {
+  //     videoRef.current.pause()
+  //     setIsPlaying(false)
+  //   }
+  // }, [isActive])
 
-  useEffect(() => {
-    if (isActive && videoRef.current) {
-      videoRef.current.play()
-      setIsPlaying(true)
-    } else if (videoRef.current) {
-      videoRef.current.pause()
-      setIsPlaying(false)
-    }
-  }, [isActive])
-
-  const togglePlay = () => {
+  const togglePlay = async(id:string) => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause()
       } else {
+        await asyncHandlerFront(
+          async() => {
+            await apiClient.viewVideo(id)
+          },
+          (error) => toast.error(error?.message)
+        )
         videoRef.current.play()
       }
       setIsPlaying(!isPlaying)
@@ -171,12 +175,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   }
 
 
-
-
-  const handleCheckboxChange = async(isChecked: boolean, playlistId: string, videoId: string) => {
-  }
-   
-  
   const handleCommentClick = () => {
     if (commentButtonRef.current) {
       const rect = commentButtonRef.current.getBoundingClientRect()
@@ -201,12 +199,11 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
           className="w-full h-full object-cover"
           loop
           muted={isMuted}
-          playsInline
-        >
+          playsInline>
           <source src={reel.videoUrl} type="video/mp4" />
         </video>
 
-        <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={togglePlay}>
+        <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={() => togglePlay(reel?._id)}>
           {!isPlaying && (
             <div className="bg-black/50 rounded-full p-4">
               <Play className="w-12 h-12 text-white fill-white" />
@@ -256,7 +253,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
 
             <div className="flex flex-col items-center space-y-4 sm:space-y-6">
               <button onClick={toggleLike} className="flex flex-col items-center cursor-pointer mb-0">
-                <div className="bg-[#0000002E] rounded-full p-3 font-semibold">
+                <div className="bg-[#a4a0a0ac] rounded-full p-3 font-semibold">
                   <Heart className={`w-6 h-6 ${isLiked ? "text-red-500 fill-red-500" : "text-white"}`} />
                 </div>
                 <span className="text-white text-xs sm:text-sm font-medium my-2">{formatNumber(reel.likes as number)}</span>
@@ -264,7 +261,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
 
               {/* Comment */}
               <button ref={commentButtonRef} onClick={handleCommentClick} className="flex flex-col items-center cursor-pointer">
-                <div className="rounded-full p-3 bg-[#0000002E]">
+                <div className="rounded-full p-3 bg-[#a4a0a0ac]">
                   <MessageCircle className="w-7 h-7 text-white font-semibold" />
                 </div>
                 {/* <span className="text-white text-xs sm:text-sm font-medium mt-1">{formatNumber(reel.comments)}</span> */}
@@ -272,7 +269,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
 
               {/* Share */}
               <button  onClick={() => setShowModal(!showModal)} className="flex flex-col items-center">
-                <div className="bg-[#0000002E] rounded-full p-3 font-semibold">
+                <div className="bg-[#a4a0a0ac] rounded-full p-3 font-semibold">
                   <Share2 className="w-7 h-7 text-white cursor-pointer font-semibold" />
                 </div>
                 {/* <span className="text-white text-xs sm:text-sm font-medium mt-1">{formatNumber(reel.shares)}</span> */}
@@ -280,12 +277,21 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
 
               {/* Bookmark */}
               <button onClick={() => toggleBookmark(reel?._id)} className="flex flex-col items-center cursor-pointer">
-                <div className="bg-[#0000002E] rounded-full p-3 font-semibold">
+                <div className="bg-[#a4a0a0ac] rounded-full p-3 font-semibold">
                   <Bookmark
                     className={`w-6 h-6 sm:w-7 sm:h-7 ${isBookmarked ? "text-yellow-500 fill-yellow-500" : "text-white"}`}
                   />
                 </div>
               </button>
+
+              <div className="flex flex-col items-center cursor-pointer">
+                <div className="bg-[#a4a0a0ac] rounded-full p-3 font-semibold">
+                  <Eye
+                    className={`w-6 h-6 sm:w-7 sm:h-7 text-white`}
+                  />
+                </div>
+                <span className="text-white text-xs sm:text-sm font-medium">{formatNumber(reel?.views || 0)}</span>
+              </div>
 
               {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-opacity duration-300 ease-in-out">
@@ -306,38 +312,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                   </div>
                 </div>
               )}
-
-
-              {/* { openSaveModal && (
-                  <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50 p-4">
-                  <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold">Save videos in Playlists</h3>
-                      <button onClick={() => setOpenSaveModal(false)} className=" cursor-pointer p-2 rounded-full text-sm transition-colors"> <X size={16} /> </button>
-                    </div>
-
-                    <div className="space-y-1 flex flex-col gap-1 justify-center">
-                      {playlistName && playlistName.map((pl) => (
-                        <label className="label" key={pl._id}>
-                          <input
-                            type="checkbox" checked={pl.isChecked} 
-                            className="checkbox bg-primary-400 checkbox-sm"
-                            onChange={(e) =>  handleCheckboxChange(e.target.checked, pl._id!, reel?._id!.toString())} 
-                            /> {pl.playlistName} 
-                        </label>
-                      )) 
-                      }
-                    </div>
-                    </div>
-                  </div>
-                ) } */}
-
-              {/* More */}
-              <button className="flex flex-col items-center">
-                <div className="bg-black/50 rounded-full p-2 sm:p-3">
-                  <MoreHorizontal className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                </div>
-              </button>
             </div>
           </div>
         </div>
@@ -348,7 +322,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         </div>
       </div>
 
-      {/* Comment Modal */}
       <CommentModal
         isOpen={isCommentModalOpen}
         onClose={closeCommentModal}
@@ -359,3 +332,34 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   )
 }
 export default ReelItem
+
+
+
+{/* <button className="flex flex-col items-center">
+<div className="bg-black/50 rounded-full p-2 sm:p-3">
+  <MoreHorizontal className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+</div>
+</button> */}
+{/* { openSaveModal && (
+  <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50 p-4">
+  <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="flex justify-between items-center mb-4">
+      <h3 className="text-lg font-semibold">Save videos in Playlists</h3>
+      <button onClick={() => setOpenSaveModal(false)} className=" cursor-pointer p-2 rounded-full text-sm transition-colors"> <X size={16} /> </button>
+    </div>
+
+    <div className="space-y-1 flex flex-col gap-1 justify-center">
+      {playlistName && playlistName.map((pl) => (
+        <label className="label" key={pl._id}>
+          <input
+            type="checkbox" checked={pl.isChecked} 
+            className="checkbox bg-primary-400 checkbox-sm"
+            onChange={(e) =>  handleCheckboxChange(e.target.checked, pl._id!, reel?._id!.toString())} 
+            /> {pl.playlistName} 
+        </label>
+      )) 
+      }
+    </div>
+    </div>
+  </div>
+) } */}

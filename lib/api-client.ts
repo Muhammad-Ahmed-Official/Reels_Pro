@@ -196,6 +196,12 @@ class ApiClient{
         });
     };
 
+    async viewVideo(id:string){
+        return this.fetch(`videos?id=${id}`, {
+            method: "PUT"
+        })
+    }
+
 
     async createNotification(notifiData: NotificaitonData){
         return this.fetch(`${server}/notify`, {
@@ -307,13 +313,6 @@ class ApiClient{
         })
     }
 
-
-
-    async viewVideo(id: string){
-        return this.fetch(`view/${id}`, {
-          method: "POST",
-        })
-    }
 
 
     async createMsg(data:IChat){
