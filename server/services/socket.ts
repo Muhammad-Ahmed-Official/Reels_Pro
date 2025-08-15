@@ -70,9 +70,9 @@ export class SocketService {
 
 
             socket.on("delete", async(data) => {
-                const { _id, messageId, receiver } = data; 
-                if (!receiver || !_id || !messageId) return;
-                io.to(receiver).emit("deleteMsg", messageId);
+                const { _id, receiver } = data; 
+                if (!_id || !receiver) return;
+                io.to(receiver).emit("deleteMsg", _id);
                 try {
                     await Chat.deleteOne({_id});
                 } catch (error: any) {
@@ -82,9 +82,9 @@ export class SocketService {
 
 
             socket.on("edit", async(data) => {
-               const { _id, receiver, sender, message } = data;
+               const { _id, receiver, message } = data;
                 if (!receiver || !_id) return;
-                const payload = { receiver, sender, message };
+                const payload = { receiver, message, _id };
                 io.to(receiver).emit("editMsg", payload);
                 try {
                     await Chat.findByIdAndUpdate(_id, { message });

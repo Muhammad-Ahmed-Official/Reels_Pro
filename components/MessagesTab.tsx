@@ -47,25 +47,21 @@ const MessagesTab = () => {
     profilePic: '',
   });
   const [users, setUsers] = useState<IChat[]>([]);
-  
   const [search, setSearch] = useState<string | null>('');
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const debounced = useDebounceCallback((val: string) => {
-    setDebouncedSearch(val);
-  }, 500);
+  const debounced = useDebounceCallback((val: string) => {setDebouncedSearch(val)}, 500);
 
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Map<string, any>>(new Map());
   const [messageInput, setMessageInput] = useState("");
-
-  const { onlineUsers, socket } = useSocket();
-  const { user } = useUser();
-
   const [menuMessageId, setMenuMessageId] = useState<string | null>(null);
-
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editedText, setEditedText] = useState('');
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [showChat, setShowChat] = useState(false);
+  
+  const { onlineUsers, socket } = useSocket();
+  const { user } = useUser();
 
   useEffect(() => {
     const searchUser = async () => {
@@ -109,9 +105,11 @@ const MessagesTab = () => {
   const getMessage = async() => {
     asyncHandlerFront(
       async () => {
-        const response = await apiClient.getMsg(activeUser?._id);
-        // console.log(response)
-        setMessages(response as any);
+        const response:any = await apiClient.getMsg(activeUser?._id);
+        const messageMap = new Map(
+          response?.map((msg:any) => [msg?._id, msg])
+        )
+        setMessages(messageMap as any);
       },
       (error) => {
         toast.error(error.message || "Something went wrong");
@@ -123,55 +121,41 @@ const MessagesTab = () => {
     activeUser?._id && getMessage()
   }, [activeUser?._id])
 
-  // console.log(users);
-
-  // 📤 Send message
-  const handleSendMessage = () => {
-    if (!messageInput.trim() || !activeUser._id) return;
-
-    const payload = {
-      sender: activeUser._id,
-      receiver:  user?._id,
-      message: messageInput,
-    };
-
-    // socket?.emit("checkRoomPresence", activeUser._id, (isPresent: boolean) => {
-    //   console.log(activeUser?._id, "*****")
-    //   console.log(isPresent)
-    //   if (isPresent) {
-    //     setMessages(prevMessages =>
-    //       prevMessages.map(msg =>
-    //         // console.log(msg)
-    //         msg.sender === activeUser._id ? { ...msg, seen: true } : msg
-    //       )
-    //     );
-    //   }
-    // });
 
 
-    socket?.emit("message", payload);
-    setMessages((prev) => [...prev, { ...payload, sender: activeUser?._id }]);
-    setMessageInput("");
-  };
 
   // 📥 Receive real-time message
   useEffect(() => {
     socket?.on("newMessage", (data) => {
-      // console.log(data, "data-:")
-      setMessages((prev) => [...prev, data]);
+      const tempId = `temp-${Date.now()}`;
+      setMessages(prev => {
+        const updated = new Map(prev);
+        updated.set(tempId, data)
+        return updated;
+      })
     });
 
     socket?.on("deleteMsg", (deletedMessageId: string) => {
-      // console.log(deletedMessageId, "deleted")
-      setMessages((prev) => prev.filter((msg) => msg.sender !== deletedMessageId));
+      if (!deletedMessageId) return;
+      setMessages(prev => {
+        if (!prev.has(deletedMessageId)) return prev;
+        const updated = new Map(prev);
+        updated.delete(deletedMessageId);
+        return updated;
+      });
     });
 
+
     socket?.on("editMsg", (payload) => {
-      setMessages(prev => 
-        prev.map((msg) => 
-          msg?.sender === payload?.sender ? {...msg, message:payload?.message} : msg
-        ) 
-      )
+      setMessages(prev => {
+        if(!prev.has(payload?._id)) return prev;
+        const updated = new Map(prev);
+        updated.set(payload?._id, {
+          ...updated.get(payload?._id),
+          message: payload?.message
+        });
+        return updated;
+      })
     });
 
     
@@ -189,15 +173,16 @@ const MessagesTab = () => {
       if (!senderId) return;
       setMessages(prevMessages => {
         let hasChanged = false;
-        const updatedMessages = prevMessages.map(msg => {
+        const updated = new Map(prevMessages)
+        updated.forEach(msg => {
           if (msg.sender === senderId && !msg.seen) {
+            updated.set(msg?._id, { ...msg, seen: true });
             hasChanged = true;
-            return { ...msg, seen: true };
           }
           return msg;
         });
 
-        return hasChanged ? updatedMessages : prevMessages;
+        return hasChanged ? updated : prevMessages;
       });
     });
 
@@ -213,15 +198,38 @@ const MessagesTab = () => {
 
 
   
+  // 📤 Send message
+  const handleSendMessage = () => {
+    if (!messageInput.trim() || !activeUser._id) return;
+    const tempId = `temp-${Date.now()}`;
+    const payload = {
+      sender: activeUser?._id,
+      receiver:  user?._id,
+      message: messageInput,
+    };
+
+    socket?.emit("message", payload);
+    setMessages(prev => {
+        const updated = new Map(prev)
+        updated.set(tempId, payload)
+        return updated
+      } 
+    )
+    setMessageInput("");
+  };
+
+
   const handleDelete = async(messageId:string) => {
     const payload = {
       _id: messageId,
-      messageId: activeUser?._id,
       receiver: user?._id
     }
-    // console.log(payload)
     socket?.emit("delete", payload);
-    setMessages((prev) => prev.filter((msg) => msg?._id !== messageId))
+    setMessages(prev => {
+      const deleteMap = new Map(prev)
+      deleteMap.delete(messageId)
+      return deleteMap
+    })
   };
 
 
@@ -233,11 +241,15 @@ const MessagesTab = () => {
       receiver: user?._id
     }
     socket?.emit("edit", payload);
-    setMessages((prev) => 
-      prev.map((msg) =>
-        msg?._id === messageId ? {...msg, message} : msg
-      )
-    )
+      setMessages((prev) => {
+        if(!prev.has(messageId)) return prev;
+        const updated = new Map(prev);
+        updated.set(messageId, {
+          ...updated.get(messageId),
+          message
+        });
+        return updated;
+      })
     setEditingMessageId(null);
     setEditedText("");
     setMenuMessageId(null);
@@ -269,12 +281,6 @@ const MessagesTab = () => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
-
-  const [showChat, setShowChat] = useState(false);
-
-
-
-  // console.log(users);
 
   
   return (
@@ -405,13 +411,12 @@ const MessagesTab = () => {
             <div className="card-body flex flex-col h-full">
               {activeUser?.userName ? (
                 <div ref={chatContainerRef} className="flex-1 flex flex-col gap-2 overflow-y-auto pr-2 max-h-[calc(100vh-300px)]">
-                  {messages?.map((msg, i) => {
+                  {Array.from(messages.values()!)?.map((msg, i) => {
                     const isOwn = msg?.sender !== user?._id;
                   return (
                     <div
                       key={i}
                       className={`flex items-end gap-2 group ${ isOwn ? "justify-end" : "justify-start"}`}>
-
                       <div className={`relative max-w-[75%]`}>
                         <div
                             className={`px-3 pt-2 rounded-xl text-sm shadow-md break-words flex ${
@@ -434,16 +439,16 @@ const MessagesTab = () => {
                                     console.log('Save edited message:', editedText);
                                     handleUpdate(msg._id, editedText);
                                   }}
-                                  className="text-xs px-1.5 py-1 mb-0.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-                                  <Check />
+                                  className="text-xs px-1.5 py-1 mb-0.5 text-white rounded hover:bg-gray-400 transition cursor-pointer">
+                                  <Check size={18} />
                                 </button>
                                 <button
                                   onClick={() => {
                                     console.log('Save edited message:', editedText);
                                     handleUpdate(msg._id, editedText);
                                   }}
-                                  className="text-xs px-1.5 py-1 mb-0.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-                                  <X />
+                                  className="text-xs px-1.5 py-1 mb-0 text-white rounded hover:bg-gray-400 transition cursor-pointer">
+                                  <X size={18} />
                                 </button>
                               </div>
                             ) : (
@@ -460,7 +465,6 @@ const MessagesTab = () => {
                                     <img src={msg.image} alt="Sent image"className="rounded-lg max-w-64 mb-2" />
                                   )}
 
-                                  {/* Text */}
                                   {msg.message && (
                                     <p className=" text-sm whitespace-pre-line">
                                       {msg.message}
@@ -483,14 +487,14 @@ const MessagesTab = () => {
                                 </button>
 
                                 {menuMessageId === msg._id && (
-                                  <div className="absolute top-7 right-0 z-20 bg-white dark:bg-gray-800 rounded-lg shadow-xl w-32 animate-fade-in-up p-2">
+                                  <div className="absolute top-7 right-0 z-20 bg-gray-800 rounded-lg shadow-xl w-32 animate-fade-in-up p-2">
                                     <button
                                       onClick={() => {
                                         setEditedText(msg.message);
                                         setEditingMessageId(msg._id);
                                         setMenuMessageId(null);
                                       }}
-                                      className="rounded-md cursor-pointer w-full flex gap-2 items-center px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                      className="rounded-md cursor-pointer w-full flex gap-2 items-center px-4 py-2 text-left text-sm hover:bg-gray-400 transition-colors">
                                       <UserRoundPen size={17} /> Edit
                                     </button>
                                     <button
@@ -503,7 +507,7 @@ const MessagesTab = () => {
                                     </button>
                                     <button
                                       onClick={() => setMenuMessageId(null)}
-                                      className="rounded-md cursor-pointer w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                      className="rounded-md cursor-pointer w-full px-4 py-2 text-left text-sm hover:bg-gray-400 transition-colors">
                                       ❌ Cancel
                                     </button>
                                   </div>
@@ -535,7 +539,6 @@ const MessagesTab = () => {
               )}
 
               { activeUser?.userName && <div className="mt-4 flex flex-col gap-x-2">
-                {/* 👇 Typing indicator */}
                 {typingUsers.includes(activeUser._id) && (
                   <div className="flex items-center space-x-2 px-2 pb-1">
                     <span className="text-sm text-gray-500">Typing</span>
