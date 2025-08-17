@@ -90,6 +90,7 @@ const MessagesTab = () => {
       await asyncHandlerFront(
         async() => {
           const response = await apiClient.sidebarUsers();
+          // console.log(response);
           setUsers(response as any);
         },
         (error) => {
@@ -122,22 +123,33 @@ const MessagesTab = () => {
   }, [activeUser?._id])
 
 
-
-
   // 📥 Receive real-time message
   useEffect(() => {
     socket?.on("newMessage", (data) => {
-      const tempId = `temp-${Date.now()}`;
-      setMessages(prev => {
-        const updated = new Map(prev);
-        updated.set(tempId, data)
-        return updated;
-      })
+      if(data?.receiver === user?._id){
+        // data?.isReceiverInRoom && handleSeen(data?.sender, data?.receiver)
+        setMessages(prev => {
+          const newMsg = new Map(prev);
+          newMsg.set(data?._id, data)
+          return newMsg;
+        });
+        
+        if(activeUser?._id !== data?.sender){
+          setUsers(prev =>  prev?.map((u) => 
+            u?.userId === data.sender ? 
+            { ...u, unreadCount: (u?.unreadCount || 0) + 1} : 
+            u
+          ))
+        }
+      }
     });
 
+
     socket?.on("deleteMsg", (deletedMessageId: string) => {
+      console.log(deletedMessageId)
       if (!deletedMessageId) return;
       setMessages(prev => {
+        // console.log(prev)
         if (!prev.has(deletedMessageId)) return prev;
         const updated = new Map(prev);
         updated.delete(deletedMessageId);
@@ -159,8 +171,8 @@ const MessagesTab = () => {
     });
 
     
-    socket?.on("startTyping", (receiver: string) => {
-      setTypingUsers([...typingUsers, receiver])
+    socket?.on("startTyping", (sender: string) => {
+      setTypingUsers([...typingUsers, sender])
     });
 
 
@@ -169,13 +181,14 @@ const MessagesTab = () => {
     });
 
 
-    socket?.on("seenMsg", (senderId: string) => {
-      if (!senderId) return;
+
+    socket?.on("seenMsg", (receiver: string) => {
+      if (!receiver) return;
       setMessages(prevMessages => {
         let hasChanged = false;
         const updated = new Map(prevMessages)
         updated.forEach(msg => {
-          if (msg.sender === senderId && !msg.seen) {
+          if (msg.receiver === receiver && !msg.seen) {
             updated.set(msg?._id, { ...msg, seen: true });
             hasChanged = true;
           }
@@ -186,6 +199,18 @@ const MessagesTab = () => {
       });
     });
 
+    
+    socket?.on("userMsg", (sender:string) => {
+      console.log(activeUser?._id, sender)
+      if(activeUser?._id === sender){
+        setUsers(prev =>  prev?.map((u) => 
+          u?.userId === sender ? 
+          { ...u, unreadCount: 0 } : u
+        ))
+      }
+    });
+
+
 
     return () => {
       socket?.off("newMessage");
@@ -193,36 +218,43 @@ const MessagesTab = () => {
       socket?.off("editMsg");
       socket?.off("startTyping");
       socket?.off("stopTyping");
+      socket?.off("userMsg");
     };
-  }, [socket]);
+  }, [socket, activeUser?._id]);
 
 
   
   // 📤 Send message
   const handleSendMessage = () => {
     if (!messageInput.trim() || !activeUser._id) return;
-    const tempId = `temp-${Date.now()}`;
+    let receiver = activeUser?._id;
+    let sender = user?._id;
     const payload = {
-      sender: activeUser?._id,
-      receiver:  user?._id,
+      _id: crypto.randomUUID(),
+      sender,  // login user
+      receiver,
       message: messageInput,
     };
 
     socket?.emit("message", payload);
     setMessages(prev => {
-        const updated = new Map(prev)
-        updated.set(tempId, payload)
-        return updated
+        const newMessage = new Map(prev)
+        newMessage.set(payload?._id, payload)
+        return newMessage;
       } 
     )
     setMessageInput("");
+
+    // socket?.emit("userMsg", {sender, receiver})
   };
 
 
-  const handleDelete = async(messageId:string) => {
+  const handleDelete = async(messageId:string, date:string) => {
     const payload = {
       _id: messageId,
-      receiver: user?._id
+      receiver: activeUser?._id,
+      // sender: user?._id,
+      date,
     }
     socket?.emit("delete", payload);
     setMessages(prev => {
@@ -237,8 +269,8 @@ const MessagesTab = () => {
     const payload = {
       _id: messageId,
       message,
-      sender: activeUser?._id,
-      receiver: user?._id
+      // sender: activeUser?._id,
+      receiver: activeUser?._id,
     }
     socket?.emit("edit", payload);
       setMessages((prev) => {
@@ -260,19 +292,20 @@ const MessagesTab = () => {
     if(!socket || !activeUser?._id) return;
     if(messageInput.trim().length > 0){
       if(!user?._id) return;
-      let receiver =  user?._id;
-      socket.emit("startTyping", receiver);
-      setTypingUsers(prev => [...prev, receiver]);
+      let sender =  user?._id;
+      let receiver = activeUser?._id
+      socket.emit("startTyping", { sender, receiver });
 
       setTimeout(() => {
-        socket.emit("stopTyping",  receiver)
+        socket.emit("stopTyping", { sender, receiver })
       }, 1000);
 
     };
   };
 
-  const handleSeen = () => {
-    if(user?._id) socket?.emit("seenMsg", user?._id)
+  const handleSeen = (sender:string, receiver:string) => {
+    if(receiver && sender) socket?.emit("seenMsg", {sender, receiver});
+     socket?.emit("userMsg", {sender, receiver})
   }
 
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
@@ -332,8 +365,8 @@ const MessagesTab = () => {
                         userName: users?.userName,
                         profilePic: users.profilePic
                       });
-                      socket?.emit("joinRoom", users?.userId || users?._id);
-                      handleSeen();
+                      // socket?.emit("joinRoom", user?._id);
+                      handleSeen( users?._id || users?.userId,  user?._id!); // sender become receiver and receiver becom on sender on sender click on tab
                       setShowChat(true);
                     }}>
                     {/* Left Section: Avatar + Name + Last Message */}
@@ -361,10 +394,20 @@ const MessagesTab = () => {
                       </div>
                     </div>
 
-                    {/* Right Section: Time */}
-                    <div className={`text-xs ${isActive ? "text-white/80" : "text-gray-400"}`}>
-                      {formatTime(users.createdAt)}
+                    {/* Right Section: Time + Unread Count */}
+                    <div className="flex flex-col items-end space-y-1">
+                      <div className={`text-xs font-medium ${ isActive ? "text-white/70" : "text-gray-400 dark:text-gray-500"}`}>
+                        {formatTime(users.createdAt)}
+                      </div>
+
+                      {users.unreadCount > 0 && (
+                        <span
+                          className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-[11px] font-semibold px-2 py-[3px] rounded-full shadow-md animate-pulse">
+                          {users.unreadCount}
+                        </span>
+                      )}
                     </div>
+
                   </div>
                 );
               })}
@@ -400,8 +443,8 @@ const MessagesTab = () => {
               </div>
               
               <button onClick={() => {
-                  socket?.emit("leaveRoom", activeUser?._id);
-                  socket?.off("seenMsg", activeUser?._id as any);
+                  // socket?.emit("leaveRoom", user?._id);
+                  // socket?.off("seenMsg", user?._id);
                   setActiveUser({ _id: "", userName: "", profilePic: "" });
                   setShowChat(false)
                 }} className='cursor-pointer'> <MessageCircleX /> 
@@ -412,7 +455,7 @@ const MessagesTab = () => {
               {activeUser?.userName ? (
                 <div ref={chatContainerRef} className="flex-1 flex flex-col gap-2 overflow-y-auto pr-2 max-h-[calc(100vh-300px)]">
                   {Array.from(messages.values()!)?.map((msg, i) => {
-                    const isOwn = msg?.sender !== user?._id;
+                    const isOwn = msg?.sender === user?._id;
                   return (
                     <div
                       key={i}
@@ -499,7 +542,7 @@ const MessagesTab = () => {
                                     </button>
                                     <button
                                       onClick={() => {
-                                        handleDelete(msg._id);
+                                        handleDelete(msg._id,  msg.createdAt);
                                         setMenuMessageId(null);
                                       }}
                                       className="rounded-md cursor-pointer w-full flex gap-1 items-center px-4 py-2 text-left text-sm transition-colors hover:bg-[#9c3e41]">

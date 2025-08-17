@@ -3,9 +3,9 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useUser } from "./userContext";
+import { useSearchParams } from "next/navigation";
 
 interface ISocketContext {
-    sendMessage: (msg: string) => any;
     socket: Socket | undefined;
     onlineUsers: string[];
 }
@@ -16,37 +16,42 @@ export const SocketProvider = ( {children} : {children: ReactNode} ) => {
     const { user } = useUser();
     const [socket, setSocket] = useState<Socket>();
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
-    // const socketRef = useRef<Socket | null>(null);
+    const searchParams = useSearchParams();
+    const tab = searchParams.get("tab");
 
     useEffect(() => {
         if(!user?._id) return;
-        // if (socketRef.current) return; // already connected
-
-            const _socket = io("http://localhost:3000", {
+        if (tab !== "messages" && tab !== "notifications"){
+            socket?.emit("leaveRoom", user?._id);
+            socket?.disconnect();
+            setSocket(undefined);
+            return;
+        } 
+            const _socket = io("http://localhost:4000", {
                 query:{    
                     userId: user?._id
                 }}
             );
-            // socketRef.current = _socket;
             setSocket(_socket);
+
+            _socket.on("connect", () => {
+                _socket?.emit("joinRoom", user?._id);
+            });
 
             _socket.on("getOnlineUser", (users: string[]) => {
                 setOnlineUsers(users)
             });
 
             return () => {
+                _socket.emit("leaveRoom", user?._id);   
                 _socket.disconnect();
-                // socketRef.current = null;
                 setSocket(undefined);
             }
-    }, [user?._id])
+    }, [user?._id, tab])
 
-    const sendMessage:ISocketContext["sendMessage"] = useCallback((msg:string) => {
-        if(socket) socket.emit("message", {message:msg})
-    }, [socket])
 
     return (
-        <SocketContext.Provider value={{sendMessage, socket, onlineUsers}}>
+        <SocketContext.Provider value={{socket, onlineUsers}}>
             { children }
         </SocketContext.Provider>
     )

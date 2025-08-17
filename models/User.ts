@@ -14,7 +14,6 @@ export interface User {
     // followers: [mongoose.Types.ObjectId];
     // following: [mongoose.Types.ObjectId];
     profilePic: string;
-    TFA: boolean;
 }
 
 const userSchema = new Schema<User>({
@@ -48,10 +47,6 @@ const userSchema = new Schema<User>({
         required: [true, "Verify code Expiry is reqired"],
     },
     isVerified: {
-        type: Boolean,
-        default: false,
-    },
-    TFA: {
         type: Boolean,
         default: false,
     },

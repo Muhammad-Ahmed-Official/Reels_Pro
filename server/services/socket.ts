@@ -51,16 +51,21 @@ export class SocketService {
 
             socket.on("leaveRoom", ( chatId ) => {
                 socket.leave(chatId);
-                console.log(`User ${userId} left room ${chatId}`);
+                console.log(`User ${socket.id} left room ${chatId}`);
             });
 
 
 
             socket.on("message", async (data) => {
-                const { sender, receiver, message } = data;
+                const { sender, receiver, message, _id } = data;
                 if (!receiver) return;
-                const payload = { sender, receiver, message };
-                io.to(receiver).emit("newMessage", payload);
+                
+                const receiverSockets = await io.in(receiver).fetchSockets();
+                const isReceiverInRoom = receiverSockets.length > 0;
+                const payload = { sender, receiver, message};
+                const payload2 = { sender, receiver, message, _id, isReceiverInRoom};
+                // console.log(payload2);
+                io.to(receiver).emit("newMessage", payload2);
                 try {
                     await Chat.create(payload)
                 } catch (error: any) {
@@ -68,13 +73,19 @@ export class SocketService {
                 }
             });
 
+            socket?.on("userMsg", ({sender, receiver}) => {
+                if(!sender || !receiver) return;
+                console.log(sender, receiver)
+                io.to(receiver).emit("userMsg", sender);
+            })
+
 
             socket.on("delete", async(data) => {
-                const { _id, receiver } = data; 
+                const { _id, receiver, date} = data; 
                 if (!_id || !receiver) return;
                 io.to(receiver).emit("deleteMsg", _id);
                 try {
-                    await Chat.deleteOne({_id});
+                    await Chat.findOneAndDelete({receiver, date});
                 } catch (error: any) {
                    console.error("Message DB save failed:", error.message);
                 }
@@ -94,26 +105,27 @@ export class SocketService {
             });
             
 
-            socket.on("startTyping", (receiver) => {
-                console.log(`User is typing in chat ${receiver}`);
-                if(!receiver) return; 
-                io.to(receiver).emit("startTyping", receiver)
+            socket.on("startTyping", ({sender, receiver}) => {
+                console.log(`User is typing in chat ${sender}`);
+                if(!sender || !receiver) return; 
+                io.to(receiver).emit("startTyping", sender)
             });
 
 
-            socket.on("stopTyping", (receiver) =>{
-                console.log(`User is stop typing in chat ${receiver}`);
+            socket.on("stopTyping", ({sender, receiver}) =>{
+                console.log(`User is stop typing in chat ${sender}`);
                 if(!receiver) return; 
-                io.to(receiver).emit("stopTyping", receiver)
+                io.to(receiver).emit("stopTyping", sender);
             });
 
 
-            socket.on("seenMsg", async(sender) => {
-                console.log("seen connected");
-                if(!sender) return;
-                io.to(sender).emit("seenMsg", sender);
+            socket.on("seenMsg", async({ sender, receiver }) => {
+                // console.log("seen connected");
+                // console.log(sender, receiver)
+                if(!sender || !receiver) return;
+                io.to(sender).emit("seenMsg", receiver);
                 try {
-                    await Chat.updateMany( { sender, seen: false }, { $set: { seen: true } } )
+                    await Chat.updateMany( { sender, receiver, seen: false }, { $set: { seen: true } } )
                 } catch (error: any) {
                    console.error("Message DB save failed:", error.message);
                 }

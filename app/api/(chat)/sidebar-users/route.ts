@@ -23,13 +23,25 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
         },
         {
             $addFields: {
-            otherUser: {
-                $cond: [
-                { $eq: ["$sender", new mongoose.Types.ObjectId(token._id)] },
-                "$receiver",
-                "$sender"
-                ]
-            }
+                otherUser: {
+                    $cond: [
+                    { $eq: ["$sender", new mongoose.Types.ObjectId(token._id)] },
+                    "$receiver",
+                    "$sender"
+                    ]
+                },
+                isUnread: {
+                    $cond: {
+                        if: {
+                            $and: [
+                                { $eq: ["$receiver", new mongoose.Types.ObjectId(token._id)]},
+                                { $eq: ["$seen", false]}
+                            ]
+                        },
+                        then: 1,
+                        else: 0
+                    }
+                }
             }
         },
         {
@@ -41,22 +53,25 @@ export const GET = asyncHandler(async (request: NextRequest):Promise<NextRespons
             }
         },
         { $unwind: "$user" },
+        { $sort: { createdAt: -1 } },
         {
-            $group: {
-            _id: "$otherUser",
-            user: { $first: "$user" },
-            latestMessage: { $first: "$message" },
-            createdAt: { $first: "$createdAt" }
+                $group: {
+                _id: "$otherUser",
+                user: { $first: "$user" },
+                latestMessage: { $first: "$message" },
+                unreadCount: { $sum: "$isUnread"},
+                createdAt: { $first: "$createdAt" }
             }
         },
         {
             $project: {
-            _id: 0,
-            userId: "$user._id",
-            userName: "$user.userName",
-            profilePic: "$user.profilePic",
-            latestMessage: 1,
-            createdAt: 1
+                _id: 0,
+                userId: "$user._id",
+                userName: "$user.userName",
+                profilePic: "$user.profilePic",
+                latestMessage: 1,
+                createdAt: 1,
+                unreadCount: 1,
             }
         },
         { $sort: { createdAt: -1 } }
