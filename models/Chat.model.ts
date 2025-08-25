@@ -13,16 +13,16 @@ export interface IChat {
     seen?: boolean;
     unreadCount?: number;
     userId?: string;
-    // customId?: string;
+    customId?: string;
 }
 
 
 const chatSchema = new Schema<IChat>({
-    // customId: {
-    //     type: String,
-    //     required: true,
-    //     unique: true,
-    // },
+    customId: {
+        type: String,
+        required: true,
+        unique: true,
+    },
     sender: { 
         type: Schema.Types.ObjectId, 
         ref: "User",

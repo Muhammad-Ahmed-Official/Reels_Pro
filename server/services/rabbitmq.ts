@@ -1,21 +1,24 @@
-// await amqplib.connect("amqp://admin:admin@localhost:5672")
-
-import { Server } from "socket.io";
 import amqplib from "amqplib";
-import { INotification } from "../Models/Notification.model.js";
+import { INotification } from "../Models/Notification.model.ts";
+import dotenv from "dotenv";
+
 let channel: amqplib.Channel
 
-export const connectRabbitMQ = async() => {
+dotenv.config({quiet:true});
+
+export const connectRabbitMQ = async () => {
+  try {
     const connection = 
     await amqplib.connect({
-        protocol: "amqp",
-        username: process.env.RABBIT_MQ_Username,
-        password: process.env.RABBIT_MQ_Password,
-        hostname: process.env.RABBIT_MQ_Host,
-        port: 5672,
+      protocol: "amqp",
+      username: process.env.RABBIT_MQ_Username,
+      password: process.env.RABBIT_MQ_Password,
+      hostname: process.env.RABBIT_MQ_Host,
+      port: 5672,
     });
-    
+
     channel = await connection.createChannel();
+    console.log("✅ RabbitMQ connected");
 
     await channel.assertExchange("direct_notif", "direct", { durable: true });
     await channel.assertQueue("notifications_queue", { durable: true });
@@ -24,7 +27,12 @@ export const connectRabbitMQ = async() => {
     await channel.assertExchange("direct_notif2", "direct", { durable: true });
     await channel.assertQueue("video_notifications_queue", { durable: true});
     await channel.bindQueue("video_notifications_queue", "direct_notif2", "video_notifications");
-}
+
+  } catch (err) {
+    console.error("❌ RabbitMQ connection failed:", err);
+    throw err;
+  }
+};
 
 
 export const sendNotification = async(notif:INotification) => {
@@ -53,4 +61,8 @@ export const sendNotification = async(notif:INotification) => {
             null;
     }
 }
-export const getChannel = () => channel;
+
+export const getChannel = () => {
+  if (!channel) throw new Error("RabbitMQ channel not initialized");
+  return channel;
+};

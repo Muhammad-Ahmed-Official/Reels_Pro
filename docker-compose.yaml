@@ -1,3 +1,4 @@
+version: "3.8"
 services:
   nginx:
     image: nginx:alpine
@@ -13,18 +14,18 @@ services:
       - app_network
 
   server1:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: server1
-    ports: 
-      -"8001:8000"
+    networks:
+      - app_network
+    ports:
+      - "8001:8000"
     depends_on:
       - redis
-      - rabbitmq:3-management-alpine
+      - rabbitmq
     restart: unless-stopped
-    networks: 
-      - app_network
     environment:
       - MONGODB_URI=mongodb+srv://ahmedanis4546:ahmed123@cluster0.tvtr7.mongodb.net/Reels_Pro
       - SERVER_ID=server-1
@@ -33,40 +34,38 @@ services:
       - PASSWORD=KbPfKbby73xgT98Ae9LosnwtnP7ptb8P
 
   server2:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: server2
-    ports: 
-      -"8002:8000"
+    networks:
+      - app_network
+    ports:
+      - "8002:8000"
     depends_on:
       - redis
-      - rabbitmq:3-management-alpine
+      - rabbitmq
     restart: unless-stopped
-    networks: 
-      - app_network
     environment:
       - MONGODB_URI=mongodb+srv://ahmedanis4546:ahmed123@cluster0.tvtr7.mongodb.net/Reels_Pro
       - SERVER_ID=server-2
       - REDIS_HOST=redis
       - PORT=6379
-      - PASSWORD=KbPfKbby73xgT98Ae9LosnwtnP7ptb8P    
+      - PASSWORD=KbPfKbby73xgT98Ae9LosnwtnP7ptb8P
 
   server3:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
-    container_name: server1
-    ports: 
-      -"8003:8000"
+    container_name: server3
+    networks:
+      - app_network
+    ports:
+      - "8003:8000"
     depends_on:
       - redis
-      - rabbitmq:3-management-alpine
+      - rabbitmq
     restart: unless-stopped
-    volumes: 
-      - ./:/app
-    networks: 
-      - app_network
     environment:
       - MONGODB_URI=mongodb+srv://ahmedanis4546:ahmed123@cluster0.tvtr7.mongodb.net/Reels_Pro
       - SERVER_ID=server-3
@@ -77,14 +76,14 @@ services:
   redis:
     image: redis
     container_name: redis
-    ports: 
+    networks:
+      - app_network
+    ports:
       - "6379:6379"
     restart: always
     volumes: 
       - redis_data:/data
-    networks: 
-      - app_network
-    command: ["redis-server", "requirepass", "KbPfKbby73xgT98Ae9LosnwtnP7ptb8P"]
+    command: redis-server --requirepass KbPfKbby73xgT98Ae9LosnwtnP7ptb8P
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -99,13 +98,13 @@ services:
       - app_network
     environment:
       RABBITMQ_DEFAULT_USER: admin      
-      RABBITMQ_DEFAULT_PASS: admin123    
+      RABBITMQ_DEFAULT_PASS: admin123      
+
 
 volumes: 
   redis_data:
   rabbitmq_data:
 
-
-nerworks: 
-  app_network: 
+networks:
+  app_network:
     driver: bridge

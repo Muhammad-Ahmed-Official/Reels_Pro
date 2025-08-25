@@ -68,17 +68,18 @@ const VideosTab = () => {
                     className="md:max-w-md h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
                     style={{ scrollbarWidth: "none", msOverflowStyle: "none"}}>
                    {reel!.map((reel, index) => (
-                    <div key={reel?._id} className="snap-start pt-2">
-                        <ReelItem reel={reel} isActive={index === currentIndex} />
-                    </div>
-                    ))}
+  <div key={reel?._id} className="snap-center h-screen flex items-center justify-center">
+    <ReelItem reel={reel} isActive={index === currentIndex} />
+  </div>
+))}
+
 
                 </div>
 
                 {/* Scroll Indicators */}
                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex flex-col space-y-2">
                     {reel?.map((_, index) => (
-                    <div key={index} className={`w-1 h-8 rounded-full transition-colors text-white ${index === currentIndex+1 ? "bg-gray-200" : "bg-black/70"}`}/>
+                    <div key={index} className={`w-1 h-8 rounded-full transition-colors text-white ${index === currentIndex ? "bg-gray-200" : "bg-black/70"}`}/>
                     ))}
                 </div>
             </div>

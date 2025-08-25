@@ -3,7 +3,7 @@ import { Like } from "@/models/Like";
 import { Playlist } from "@/models/Playlist";
 import { User } from "@/models/User";
 import { IVideo } from "@/models/Video";
-import { IChat } from "@/server/Models/Chat.models";
+import { IChat } from "@/server/Models/Chat.model";
 import { INotification } from "@/server/Models/Notification.model";
 
 export type VideosFormData = Omit<IVideo, "_id" | "user" | "views">;
@@ -218,6 +218,14 @@ class ApiClient{
             body: { videoId: id }
         })
     };
+
+
+    async shareVideo(data:string){
+        return this.fetch("share-video", {
+            method: "POST",
+            body: data,
+        })
+    }
 
 
 

@@ -5,7 +5,7 @@ import FileUpload from "./FileUplod";
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib/api-client";
-import { IChat } from "@/server/Models/Chat.models";
+import { IChat } from "@/server/Models/Chat.model";
 import { useDebounceCallback } from "usehooks-ts";
 import Image from "next/image";
 import { useSocket } from "@/app/context/SocketContext";
@@ -108,9 +108,10 @@ const MessagesTab = () => {
       async () => {
         const response:any = await apiClient.getMsg(activeUser?._id);
         const messageMap = new Map(
-          response?.map((msg:any) => [msg?._id, msg])
+          response?.map((msg:any) => [msg?.customId, msg])
         )
         setMessages(messageMap as any);
+        // setMessages(response)
       },
       (error) => {
         toast.error(error.message || "Something went wrong");
@@ -122,34 +123,81 @@ const MessagesTab = () => {
     activeUser?._id && getMessage()
   }, [activeUser?._id])
 
+  function moveUserToTop(users:any[], data:any){
+    const user = users.find((u:any) => u?.userId === data?.sender);
+    if(!user){
+      const newUser = {
+        userId: data?.sender,
+        userName: data?.userName,
+        profilePic: data?.profilePic,
+        latestMessage: data?.message,
+        createdAt: data?.createdAt || new Date().toISOString(),
+        unreadCount: 1,
+      };
+      return [newUser, ...users];
+    }
+    const filteredUsers = users?.filter((u:any) => u?.userId !== data?.sender) 
+    return [user, ...filteredUsers];
+  } 
+
 
   // 📥 Receive real-time message
   useEffect(() => {
     socket?.on("newMessage", (data) => {
       if(data?.receiver === user?._id){
-        // data?.isReceiverInRoom && handleSeen(data?.sender, data?.receiver)
+        // console.log(activeUser?._id);
+        // console.log(data?.receiver);
+        // console.log(data?.receiver !== activeUser?._id)
+
+        // for realtime seen mark blue
+        if(data?.receiver && activeUser?._id && data?.receiver !== activeUser?._id){
+          data?.isReceiverInRoom && handleSeen(data?.sender, data?.receiver)
+        }
         setMessages(prev => {
           const newMsg = new Map(prev);
-          newMsg.set(data?._id, data)
+          newMsg.set(data?.customId, data)
           return newMsg;
         });
-        
+        // Msg counter
         if(activeUser?._id !== data?.sender){
-          setUsers(prev =>  prev?.map((u) => 
-            u?.userId === data.sender ? 
-            { ...u, unreadCount: (u?.unreadCount || 0) + 1} : 
-            u
-          ))
+          setUsers(prev => {
+            const updated = prev?.map(u =>
+            u.userId === data.sender
+              ? { ...u, unreadCount: (u.unreadCount || 0) + 1 }
+              : u
+            );
+            return moveUserToTop(updated, data);
+          })
         }
       }
     });
 
 
+    // socket?.on("reelShareTo", (data) => {
+    //   if(data?.receiver === user?._id){
+    //     setMessages(prev => {
+    //       const newMsg = new Map(prev);
+    //       newMsg.set(data?.customId, data)
+    //       return newMsg;
+    //     });
+
+    //     if(activeUser?._id !== data?.sender){
+    //       setUsers(prev => {
+    //         const updated = prev?.map(u =>
+    //         u.userId === data.sender
+    //           ? { ...u, unreadCount: (u.unreadCount || 0) + 1 }
+    //           : u
+    //         );
+    //         return moveUserToTop(updated, data);
+    //       })
+    //     }
+    //   }
+    // })
+
+
     socket?.on("deleteMsg", (deletedMessageId: string) => {
-      console.log(deletedMessageId)
       if (!deletedMessageId) return;
       setMessages(prev => {
-        // console.log(prev)
         if (!prev.has(deletedMessageId)) return prev;
         const updated = new Map(prev);
         updated.delete(deletedMessageId);
@@ -160,10 +208,10 @@ const MessagesTab = () => {
 
     socket?.on("editMsg", (payload) => {
       setMessages(prev => {
-        if(!prev.has(payload?._id)) return prev;
+        if(!prev.has(payload?.customId)) return prev;
         const updated = new Map(prev);
-        updated.set(payload?._id, {
-          ...updated.get(payload?._id),
+        updated.set(payload?.customId, {
+          ...updated.get(payload?.customId),
           message: payload?.message
         });
         return updated;
@@ -184,12 +232,13 @@ const MessagesTab = () => {
 
     socket?.on("seenMsg", (receiver: string) => {
       if (!receiver) return;
+      console.log(receiver);
       setMessages(prevMessages => {
         let hasChanged = false;
         const updated = new Map(prevMessages)
         updated.forEach(msg => {
-          if (msg.receiver === receiver && !msg.seen) {
-            updated.set(msg?._id, { ...msg, seen: true });
+          if (msg?.receiver === receiver && !msg.seen) {
+            updated.set(msg?.customId, { ...msg, seen: true });
             hasChanged = true;
           }
           return msg;
@@ -201,7 +250,6 @@ const MessagesTab = () => {
 
     
     socket?.on("userMsg", (sender:string) => {
-      console.log(activeUser?._id, sender)
       if(activeUser?._id === sender){
         setUsers(prev =>  prev?.map((u) => 
           u?.userId === sender ? 
@@ -230,16 +278,18 @@ const MessagesTab = () => {
     let receiver = activeUser?._id;
     let sender = user?._id;
     const payload = {
-      _id: crypto.randomUUID(),
+      customId: crypto.randomUUID(),
       sender,  // login user
       receiver,
       message: messageInput,
+      userName: user?.userName,
+      // profilPic: user?.,
     };
 
     socket?.emit("message", payload);
     setMessages(prev => {
         const newMessage = new Map(prev)
-        newMessage.set(payload?._id, payload)
+        newMessage.set(payload?.customId, payload)
         return newMessage;
       } 
     )
@@ -249,12 +299,11 @@ const MessagesTab = () => {
   };
 
 
-  const handleDelete = async(messageId:string, date:string) => {
+  const handleDelete = async(messageId:string) => {
     const payload = {
-      _id: messageId,
+      customId: messageId,
       receiver: activeUser?._id,
       // sender: user?._id,
-      date,
     }
     socket?.emit("delete", payload);
     setMessages(prev => {
@@ -267,7 +316,7 @@ const MessagesTab = () => {
 
   const handleUpdate = async(messageId:string, message:string) => {
     const payload = {
-      _id: messageId,
+      customId: messageId,
       message,
       // sender: activeUser?._id,
       receiver: activeUser?._id,
@@ -363,7 +412,7 @@ const MessagesTab = () => {
                       setActiveUser({
                         _id: users?.userId || users?._id,
                         userName: users?.userName,
-                        profilePic: users.profilePic
+                        profilePic: users?.profilePic
                       });
                       // socket?.emit("joinRoom", user?._id);
                       handleSeen( users?._id || users?.userId,  user?._id!); // sender become receiver and receiver becom on sender on sender click on tab
@@ -372,24 +421,30 @@ const MessagesTab = () => {
                     {/* Left Section: Avatar + Name + Last Message */}
                     <div className="flex items-center space-x-3 overflow-hidden">
                       <div className="relative w-12 h-12 flex-shrink-0">
-                        <Image
-                          src={users.profilePic}
-                          alt="profilePic"
-                          width={48}
-                          height={48}
-                          className="object-cover w-full h-full rounded-full border border-gray-200"
-                        />
-                        {onlineUsers?.includes( users?.userId || users?._id) && (
+                        {users?.profilePic ? (
+                          <Image
+                            src={users.profilePic}
+                            alt="profilePic"
+                            width={48}
+                            height={48}
+                            className="object-cover w-full h-full rounded-full border border-gray-200"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 flex items-center justify-center rounded-full bg-indigo-500 text-white font-semibold border border-gray-200">
+                            {users?.userName?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+
+                        {onlineUsers?.includes(users?.userId || users?._id) && (
                           <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" />
                         )}
                       </div>
-
                       <div className="min-w-0">
                         <div className="font-semibold truncate">{users?.userName?.charAt(0)?.toUpperCase() + users?.userName?.slice(1)}</div>
                         <div className={`text-sm truncate ${isActive ? "text-white/80" : "text-gray-500"}`}>
                           {users?.latestMessage?.length
-                            ? users.latestMessage.slice(0, 25) + "..."
-                            : users.latestMessage || "No messages yet"}
+                            ? users?.latestMessage.slice(0, 25) + "..."
+                            : users?.latestMessage || "No messages yet"}
                         </div>
                       </div>
                     </div>
@@ -397,13 +452,13 @@ const MessagesTab = () => {
                     {/* Right Section: Time + Unread Count */}
                     <div className="flex flex-col items-end space-y-1">
                       <div className={`text-xs font-medium ${ isActive ? "text-white/70" : "text-gray-400 dark:text-gray-500"}`}>
-                        {formatTime(users.createdAt)}
+                        {formatTime(users?.createdAt)}
                       </div>
 
-                      {users.unreadCount > 0 && (
+                      {users?.unreadCount > 0 && (
                         <span
                           className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-[11px] font-semibold px-2 py-[3px] rounded-full shadow-md animate-pulse">
-                          {users.unreadCount}
+                          {users?.unreadCount}
                         </span>
                       )}
                     </div>
@@ -468,7 +523,7 @@ const MessagesTab = () => {
                               : "bg-gray-100 text-gray-800 rounded-bl-none"
                             }`}>
                             
-                            {editingMessageId === msg._id ? (
+                            {editingMessageId === msg?.customId ? (
                               <div className="flex items-center gap-2 w-full">
                                 <input
                                   type="text"
@@ -479,16 +534,16 @@ const MessagesTab = () => {
                                 />
                                 <button
                                   onClick={() => {
-                                    console.log('Save edited message:', editedText);
-                                    handleUpdate(msg._id, editedText);
+                                    // console.log('Save edited message:', editedText);
+                                    handleUpdate(msg?.customId, editedText);
                                   }}
                                   className="text-xs px-1.5 py-1 mb-0.5 text-white rounded hover:bg-gray-400 transition cursor-pointer">
                                   <Check size={18} />
                                 </button>
                                 <button
                                   onClick={() => {
-                                    console.log('Save edited message:', editedText);
-                                    handleUpdate(msg._id, editedText);
+                                    // console.log('Save edited message:', editedText);
+                                    handleUpdate(msg?.customId, editedText);
                                   }}
                                   className="text-xs px-1.5 py-1 mb-0 text-white rounded hover:bg-gray-400 transition cursor-pointer">
                                   <X size={18} />
@@ -496,21 +551,21 @@ const MessagesTab = () => {
                               </div>
                             ) : (
                               <>
-                                  {msg.video && (
+                                  {msg?.video && (
                                     <video
                                       controls
                                       className="rounded-lg max-w-64 mb-2">
-                                      <source src={msg.video} type="video/mp4" />
+                                      <source src={msg?.video} type="video/mp4" />
                                     </video>
                                   )}
 
-                                  {msg.image && (
-                                    <img src={msg.image} alt="Sent image"className="rounded-lg max-w-64 mb-2" />
+                                  {msg?.image && (
+                                    <img src={msg?.image} alt="Sent image"className="rounded-lg max-w-64 mb-2" />
                                   )}
 
-                                  {msg.message && (
+                                  {msg?.message && (
                                     <p className=" text-sm whitespace-pre-line">
-                                      {msg.message}
+                                      {msg?.message}
                                     </p>
                                   )}
 
@@ -524,17 +579,17 @@ const MessagesTab = () => {
                             {isOwn && (
                               <div className="relative group ml-2">
                                 <button
-                                  onClick={() => setMenuMessageId(msg._id)}
+                                  onClick={() => setMenuMessageId(msg?.customId)}
                                   className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform hover:translate-y-1">
                                  {!editingMessageId && <ChevronDown size={18} className="text-gray-500 cursor-pointer hover:text-black dark:hover:text-white transition-transform duration-200" /> }
                                 </button>
 
-                                {menuMessageId === msg._id && (
+                                {menuMessageId === msg?.customId && (
                                   <div className="absolute top-7 right-0 z-20 bg-gray-800 rounded-lg shadow-xl w-32 animate-fade-in-up p-2">
                                     <button
                                       onClick={() => {
                                         setEditedText(msg.message);
-                                        setEditingMessageId(msg._id);
+                                        setEditingMessageId(msg?.customId);
                                         setMenuMessageId(null);
                                       }}
                                       className="rounded-md cursor-pointer w-full flex gap-2 items-center px-4 py-2 text-left text-sm hover:bg-gray-400 transition-colors">
@@ -542,7 +597,7 @@ const MessagesTab = () => {
                                     </button>
                                     <button
                                       onClick={() => {
-                                        handleDelete(msg._id,  msg.createdAt);
+                                        handleDelete(msg?.customId);
                                         setMenuMessageId(null);
                                       }}
                                       className="rounded-md cursor-pointer w-full flex gap-1 items-center px-4 py-2 text-left text-sm transition-colors hover:bg-[#9c3e41]">

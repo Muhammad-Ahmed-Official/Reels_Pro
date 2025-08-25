@@ -4,7 +4,6 @@ const { model, models, Schema } = pkg;
 export interface INotification {
     _id?: string;
     typeNotification: "like" | "follow" | "comment" | "video";
-    // sender: string;
     receiver: string;
     reelId?: string;
     isRead?: boolean;
@@ -25,10 +24,6 @@ const notificationSchema = new Schema<INotification>({
         type: String,
         required: true,
     },
-    // recipient: {
-    //     type: String,
-    //     required: true,
-    // },
     message: {
         type: String,
         required: true,

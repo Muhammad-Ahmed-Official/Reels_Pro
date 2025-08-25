@@ -18,10 +18,10 @@ export const SocketProvider = ( {children} : {children: ReactNode} ) => {
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
     const searchParams = useSearchParams();
     const tab = searchParams.get("tab");
-
+    
     useEffect(() => {
         if(!user?._id) return;
-        if (tab !== "messages" && tab !== "notifications"){
+        if (tab !== "messages" && tab !== "notifications" && tab !== "/"){
             socket?.emit("leaveRoom", user?._id);
             socket?.disconnect();
             setSocket(undefined);

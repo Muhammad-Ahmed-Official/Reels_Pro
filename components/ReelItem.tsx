@@ -1,7 +1,7 @@
 "use client"
 
 import { apiClient, type PlaylistFormData, type VideoFormData } from "@/lib/api-client"
-import { Heart, MessageCircle, Share, Bookmark, MoreHorizontal, Play, VolumeX, Volume2, X, Share2, Eye } from "lucide-react"
+import { Heart, MessageCircle, Bookmark, Play, VolumeX, Volume2, X, Share2, Eye } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import CommentModal from "./CommentModal"
 import Image from "next/image"
@@ -43,47 +43,66 @@ function getDaysAgo(input?: string | Date) {
 
 
 const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }) => {
-  const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(true)
   const [isLiked, setIsLiked] = useState(reel.isLiked)
   const [isBookmarked, setIsBookmarked] = useState(reel?.savedVideo);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false)
   const [commentButtonPosition, setCommentButtonPosition] = useState<{ x: number; y: number } | undefined>()
   const [isFollowing, setIsFollowing] = useState(reel?.isFollow);
-  const { data: session } = useSession();
+  const [isPlaying, setIsPlaying] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
   const [showModal, setShowModal] = useState<boolean>(false);
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const [viewed, setViewed] = useState(false);
   const commentButtonRef = useRef<HTMLButtonElement>(null)
-  const { socket } = useSocket();
+  const [watch, setWatch] = useState(reel?.views);
+  const { data: session } = useSession();
   const { user } = useUser();
   const router = useRouter();
 
-  // useEffect(() => {
-  //   if (isActive && videoRef.current) {
-  //     // videoRef.current.play()
-  //     // setIsPlaying(true)
-  //   } else if (videoRef.current) {
-  //     videoRef.current.pause()
-  //     setIsPlaying(false)
-  //   }
-  // }, [isActive])
+  // Auto play/pause when reel is in viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(async (entry) => {
+          if (videoRef.current) {
+            if (entry.isIntersecting) {
+              await videoRef.current.play();
+              setIsPlaying(true);
 
-  const togglePlay = async(id:string) => {
-    if (videoRef.current) {
+              if (!viewed) {
+                try {
+                  await apiClient.viewVideo(reel?._id);
+                  setViewed(true);
+                  setWatch(watch + 1);
+                } catch (error: any) {
+                  toast.error(error?.message || "Error counting view");
+                }
+              }
+            } else {
+              videoRef.current.pause();
+              setIsPlaying(false);
+            }
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
+
+    if (videoRef.current) observer.observe(videoRef.current);
+    return () => observer.disconnect();
+  }, [reel?._id, viewed]);
+
+
+  const togglePlay = async() => {
+    if (!videoRef.current) return;
       if (isPlaying) {
-        videoRef.current.pause()
+        videoRef.current.pause();
+        setIsPlaying(false);
       } else {
-        await asyncHandlerFront(
-          async() => {
-            await apiClient.viewVideo(id)
-          },
-          (error) => toast.error(error?.message)
-        )
-        videoRef.current.play()
+        videoRef.current.play();
+        setIsPlaying(true);
       }
-      setIsPlaying(!isPlaying)
     }
-  }
 
   const toggleMute = () => {
     if (videoRef.current) {
@@ -112,7 +131,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     await asyncHandlerFront(
         async() => {
             await apiClient.likeUnlikeVideo(reel?._id);
-            toast.success(isLiked ? "Video liked successfully" : "Video unliked successfully");
             sendNotification("like", isLiked ? "liked your reel" : "Unliked your reel");
         }, 
         (error) => {
@@ -127,7 +145,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     await asyncHandlerFront(
       async() => {
         await apiClient.saveVideo(id);
-        toast.success(!isBookmarked ? "Video saved successfully" : "Video unsaved successfully");
       }, 
       (error) => {
         toast.error(error.message)
@@ -141,7 +158,6 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     await asyncHandlerFront(
         async() => {
             await apiClient.follow(reel.owner._id as string);
-            toast.success(!isFollowing ? "Follow successfully" : "Unfollow successfully");
             sendNotification("follow", !isFollowing ? "Follow's you" : "Unfollow you")
         }, 
         (error) => {
@@ -154,6 +170,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
 
   const handleSelect = async(id:string, video:string) => {
     const payload = {
+      customId: crypto.randomUUID(),
       sender: user?._id,
       receiver: id,
       video, 
@@ -167,9 +184,15 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     if(user?._id === id) {
       toast.error("Can't share your self");
       return
-    }
+    };
+      // socket?.emit("reel", payload);
+    await asyncHandlerFront(
+      async() => {
+        await apiClient.shareVideo(payload as any);
+      },
+      (err) => toast.error("Error share video")
+    )
 
-    socket?.emit("reel", payload);
     setShowModal(false);
     toast.success("Reel shared");
   }
@@ -203,7 +226,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
           <source src={reel.videoUrl} type="video/mp4" />
         </video>
 
-        <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={() => togglePlay(reel?._id)}>
+        <div className="absolute inset-0 flex items-center justify-center cursor-pointer" onClick={togglePlay}>
           {!isPlaying && (
             <div className="bg-black/50 rounded-full p-4">
               <Play className="w-12 h-12 text-white fill-white" />
@@ -290,7 +313,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
                     className={`w-6 h-6 sm:w-7 sm:h-7 text-white`}
                   />
                 </div>
-                <span className="text-white text-xs sm:text-sm font-medium">{formatNumber(reel?.views || 0)}</span>
+                <span className="text-white text-xs sm:text-sm font-medium">{formatNumber(watch || 0)}</span>
               </div>
 
               {showModal && (
@@ -332,34 +355,3 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
   )
 }
 export default ReelItem
-
-
-
-{/* <button className="flex flex-col items-center">
-<div className="bg-black/50 rounded-full p-2 sm:p-3">
-  <MoreHorizontal className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-</div>
-</button> */}
-{/* { openSaveModal && (
-  <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50 p-4">
-  <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
-    <div className="flex justify-between items-center mb-4">
-      <h3 className="text-lg font-semibold">Save videos in Playlists</h3>
-      <button onClick={() => setOpenSaveModal(false)} className=" cursor-pointer p-2 rounded-full text-sm transition-colors"> <X size={16} /> </button>
-    </div>
-
-    <div className="space-y-1 flex flex-col gap-1 justify-center">
-      {playlistName && playlistName.map((pl) => (
-        <label className="label" key={pl._id}>
-          <input
-            type="checkbox" checked={pl.isChecked} 
-            className="checkbox bg-primary-400 checkbox-sm"
-            onChange={(e) =>  handleCheckboxChange(e.target.checked, pl._id!, reel?._id!.toString())} 
-            /> {pl.playlistName} 
-        </label>
-      )) 
-      }
-    </div>
-    </div>
-  </div>
-) } */}

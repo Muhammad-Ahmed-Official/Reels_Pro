@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
-import { getChannel } from "../services/rabbitmq.js";
-import { Notification } from "../Models/Notification.model.js";
+import { getChannel } from "../services/rabbitmq.ts";
+import { Notification } from "../Models/Notification.model.ts";
 
 export const consumeNotifications = async (io: Server) => {
   const channel = getChannel();

@@ -1,24 +1,35 @@
-import { consumeNotifications } from '../Consumer/notificationConsumer.js';
-import { Chat } from '../Models/Chat.models.js';
 import { Server } from 'socket.io'
+import { createAdapter } from "@socket.io/redis-adapter";
 import { Redis } from "ioredis";
+import { Chat } from '../Models/Chat.model.ts';
+import { consumeNotifications } from '../Consumer/notificationConsumer.ts';
 import dotenv from "dotenv";
 
 dotenv.config({quiet:true});
 
-const redis = new Redis ({
+const pub = new Redis ({
     host: process.env.REDIS_HOST_URL,
     port: Number(process.env.REDIS_PORT_NUMBER),
     password: process.env.REDIS_PASSWORD,
 });
 
+const sub = pub.duplicate();
 
-export class SocketService {
+pub.on("error", (err: any) => {
+  console.error("Redis pub error:", err);
+});
+sub.on("error", (err: any) => {
+  console.error("Redis sub error:", err);
+});
+
+
+export default class SocketService {
     private _io: Server;
     private userSocketMap = new Set<string>();
 
     constructor(){
         this._io = new Server({
+            adapter: createAdapter(pub, sub),
             cors: {
                 allowedHeaders: ['*'],
                 origin: '*'
@@ -57,14 +68,14 @@ export class SocketService {
 
 
             socket.on("message", async (data) => {
-                const { sender, receiver, message, _id } = data;
+                const { sender, receiver, message, customId, userName, profilePic } = data;
                 if (!receiver) return;
                 
                 const receiverSockets = await io.in(receiver).fetchSockets();
                 const isReceiverInRoom = receiverSockets.length > 0;
-                const payload = { sender, receiver, message};
-                const payload2 = { sender, receiver, message, _id, isReceiverInRoom};
-                // console.log(payload2);
+                const payload2 = { sender, receiver, message, customId, userName, profilePic, isReceiverInRoom};
+                const payload = { sender, receiver, message, customId, userName, profilePic};
+                // console.log(payload);
                 io.to(receiver).emit("newMessage", payload2);
                 try {
                     await Chat.create(payload)
@@ -75,17 +86,17 @@ export class SocketService {
 
             socket?.on("userMsg", ({sender, receiver}) => {
                 if(!sender || !receiver) return;
-                console.log(sender, receiver)
                 io.to(receiver).emit("userMsg", sender);
             })
 
 
             socket.on("delete", async(data) => {
-                const { _id, receiver, date} = data; 
-                if (!_id || !receiver) return;
-                io.to(receiver).emit("deleteMsg", _id);
+                const { customId, receiver } = data; 
+                console.log(data)
+                if (!customId || !receiver) return;
+                io.to(receiver).emit("deleteMsg", customId);
                 try {
-                    await Chat.findOneAndDelete({receiver, date});
+                    await Chat.findOneAndDelete({customId});
                 } catch (error: any) {
                    console.error("Message DB save failed:", error.message);
                 }
@@ -93,12 +104,12 @@ export class SocketService {
 
 
             socket.on("edit", async(data) => {
-               const { _id, receiver, message } = data;
-                if (!receiver || !_id) return;
-                const payload = { receiver, message, _id };
+               const { customId, receiver, message } = data;
+                if (!receiver || !customId) return;
+                const payload = { receiver, message, customId };
                 io.to(receiver).emit("editMsg", payload);
                 try {
-                    await Chat.findByIdAndUpdate(_id, { message });
+                    await Chat.findByIdAndUpdate(customId, { message });
                 } catch (error: any) {
                    console.error("Message DB save failed:", error.message);
                 }     
@@ -120,8 +131,6 @@ export class SocketService {
 
 
             socket.on("seenMsg", async({ sender, receiver }) => {
-                // console.log("seen connected");
-                // console.log(sender, receiver)
                 if(!sender || !receiver) return;
                 io.to(sender).emit("seenMsg", receiver);
                 try {
@@ -131,20 +140,31 @@ export class SocketService {
                 }
             });
 
+            socket.on("checkRoomPresence", (receiverId: string, callback) => {
+                console.log(receiverId)
+                // Check if the receiver is in the online users map
+                const isOnline = this.userSocketMap.has(receiverId);
+                console.log(isOnline)
+                callback(isOnline);
+            });
+
+
+            // socket?.on("reel", async(data) => {
+            //     console.log(data);
+            //     if(!data || !data?.receiver) return;
+            //     io.to(data?.receiver).emit("reelShareTo", data);
+            //     try {
+            //         await Chat.create(data)
+            //     } catch (error: any) {
+            //         console.error("Message DB save failed:", error.message);
+            //     }
+            // });
             
             
             // Start consumer ONCE
             socket.on("notif", () => {
                 consumeNotifications(io);
             })
-
-            socket?.on("reel", async(data) => {
-                try {
-                    await Chat.create(data)
-                } catch (error: any) {
-                   console.error("Message DB save failed:", error.message);
-                }
-            });
 
             
             socket.on("disconnect", () => {
@@ -168,10 +188,4 @@ export class SocketService {
     }
 }
 
- // socket.on("checkRoomPresence", (receiverId: string, callback) => {
-//     console.log(receiverId)
-//     // Check if the receiver is in the online users map
-//     const isOnline = this.userSocketMap.has(receiverId);
-//     console.log(isOnline)
-//     callback(isOnline);
-// });
+

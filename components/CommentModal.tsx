@@ -77,7 +77,7 @@ const CommentItem = ({ comment, depth = 0,  onAddReply, onDeleteComment, onUpdat
       async () => {
         const newReply:any = await apiClient.replyComment(comment?.videoId, replyText, comment._id);
         onAddReply(comment?._id, newReply?.data);
-        toast.success("Reply posted");
+        // toast.success("Reply posted");
         setReplyText("");
         setIsReplying(false);
       },
@@ -91,7 +91,7 @@ const CommentItem = ({ comment, depth = 0,  onAddReply, onDeleteComment, onUpdat
       async () => {
         const updReply:any = await apiClient.updateComment(comment?._id, editText);
         onUpdateComment(comment?._id, updReply?.data);
-        toast.success("Comment updated");
+        // toast.success("Comment updated");
         setIsEditing(false);
       },
       (err) => toast.error(err.message)
@@ -104,7 +104,7 @@ const CommentItem = ({ comment, depth = 0,  onAddReply, onDeleteComment, onUpdat
         async () => {
           await apiClient.deleteComment(comment._id);
           onDeleteComment(comment?._id);
-          toast.success("Comment deleted");
+          // toast.success("Comment deleted");
         },
         (err) => toast.error(err.message)
       );
@@ -268,7 +268,7 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
       await asyncHandlerFront(
         async () => {
           const response = await apiClient.getComment(reelId);
-          console.log(response.data);
+          // console.log(response.data);
           setComment(response?.data as any);
         }
       ).catch((error: any) => {
@@ -314,7 +314,7 @@ export default function CommentModal({ isOpen, onClose, reelId, position } : Com
             async() => {
                 await apiClient.createComment(reelId, data.comment);
                 reset();
-                toast.success("comment successfully");
+                // toast.success("comment successfully");
                 const newComment = {
                 createdAt: new Date().toISOString(),
                 comment: data?.comment,

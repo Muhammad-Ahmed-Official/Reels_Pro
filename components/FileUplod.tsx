@@ -1,6 +1,6 @@
 "use client" 
 
-import { ImageKitAbortError, ImageKitInvalidRequestError, ImageKitServerError, ImageKitUploadNetworkError, upload } from "@imagekit/next";
+import { upload } from "@imagekit/next";
 import { useRef, useState } from "react";
 import { Image, Loader2 } from "lucide-react";
 
@@ -102,8 +102,6 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
                 <>{fileType === "video" ? "Video" :  <Image size={20} />}</>
                 )}
             </button>
-            {/* {uploading && onProgress && ( <progress className="progress w-full" value={progress} max={100} />)}
-            {error && <div className="text-red-500 text-sm">{error}</div>} */}
         </div>
     );
 };

@@ -1,17 +1,10 @@
-// app.use(express.json({ limit: "1mb" }));
-// app.use(express.urlencoded({ extended: true, limit: "1mb" }));
-// app.use(express.static("public"));
-
 import express from "express";
 import cors from "cors";
-
-
 import dotenv from "dotenv";
 import { createServer } from "http";
 import dbConnect from "./db.js";
-import { connectRabbitMQ, sendNotification } from "./services/rabbitmq.js";
-import { Notification } from "./Models/Notification.model.js";
-import { SocketService } from "./services/socket.js";
+import { connectRabbitMQ, sendNotification } from "./services/rabbitmq.ts";
+import SocketService from "./services/socket.ts";
 
 dotenv.config({quiet:true});
 
@@ -49,13 +42,6 @@ const startServer = async () => {
 startServer();
 
 // Routes
-const notif = {
-  typeNotification: "video",
-  receiver: ["689222b857c8bbd13533205f", "689222b857c8bbd13533235f"],
-  message: "Upload new Reel",
-  reelId: "6892380f44efd746aec5fe3b"
-}
-
 app.post("/api/sendNotification", async (req, res) => {
   try {
     const notif = req.body;

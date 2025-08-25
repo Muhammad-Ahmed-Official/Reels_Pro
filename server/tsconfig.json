@@ -14,8 +14,9 @@
   },
     "include": [
   "./**/*.ts",
-//   "../models/Message.models.ts"
-],
+  "../Models/Chat.model.ts",
+  "../Models/Notification.model.ts"
+  ],
   "exclude": [
     "node_modules",
     "dist"

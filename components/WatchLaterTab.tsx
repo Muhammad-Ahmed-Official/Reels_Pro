@@ -52,7 +52,7 @@ export default function WatchLaterTab({ collectionModalOpen, setCollectionModalO
     await asyncHandlerFront(
       async () => {
         await apiClient.deletePlaylist(id);
-        toast.success("Collection deleted successfully");
+        // toast.success("Collection deleted successfully");
         setCollectionModalOpen(false);
       },
       (error) => console.log(error.message)
@@ -68,7 +68,7 @@ export default function WatchLaterTab({ collectionModalOpen, setCollectionModalO
           if (!prev) return prev;
           const newMap = new Map(prev?.videos)
           newMap.delete(id);
-          toast.success("Video deleted successfully");
+          // toast.success("Video deleted successfully");
           return { ...prev, videos: newMap};
         })
       },
