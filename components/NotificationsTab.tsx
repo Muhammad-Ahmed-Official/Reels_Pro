@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { useSocket } from "@/app/context/SocketContext";
 import { Bell, Trash2, X } from "lucide-react"
-import { INotification } from "@/server/Models/Notification.model";
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib/api-client";
 import Loader from "./Loader";
 import { useUser } from "@/app/context/userContext";
+import { INotification } from "@/microservice/server/Models/Notification.model";
 
   const NotificationsTab = () => {
     const { socket } = useSocket();

@@ -52,11 +52,12 @@ export default function CreateTab({
         toast.success("Reel published successfully!");
         reset();
         setIsModalOpen(false);
-        sendNotification();
+        if (typeof window !== "undefined") {
+          const event = new CustomEvent("refreshVideos");
+          window.dispatchEvent(event);
+        }
+        // sendNotification();
       },
-      (error) => {
-        toast.error(error.message || "Something went wrong");
-      }
     );
   };
 
@@ -65,7 +66,7 @@ export default function CreateTab({
     <>
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-4xl max-h-[90vh] bg-gradient-to-br from-white/70 to-white/50 backdrop-blur-xl rounded-3xl shadow-xl shadow-purple-200/40 overflow-hidden transition-all duration-300">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white backdrop-blur-xl rounded-3xl shadow-xl shadow-purple-200/40 overflow-hidden transition-all duration-300">
             <button
               className="absolute top-3 right-3 z-10 p-2 cursor-pointer text-gray-500 hover:text-purple-600 bg-white/70 rounded-full shadow-sm transition"
               onClick={() => setIsModalOpen(false)}
@@ -119,7 +120,7 @@ export default function CreateTab({
                     <div className="w-full lg:w-2/5">
                       <h4 className="font-semibold mb-3 text-gray-800 text-sm sm:text-base">Video Preview</h4>
                       {watch("videoUrl") && (
-                        <div className="aspect-[9/10] bg-black rounded-lg overflow-hidden mx-auto lg:mx-0">
+                        <div className="aspect-[7/6] bg-black rounded-lg overflow-hidden mx-auto lg:mx-0">
                           <video
                             src={watch("videoUrl")}
                             controls
@@ -158,16 +159,16 @@ export default function CreateTab({
                         )}
                       </div>
 
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                      {/* <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                         <label className="flex items-center space-x-2 text-sm">
                           <input type="checkbox" defaultChecked />
-                          <span className="text-gray-900 dark:text-white">Allow comments</span>
+                          <span className="text-gray-900">Allow comments</span>
                         </label>
                         <label className="flex items-center space-x-2 text-sm">
                           <input type="checkbox" defaultChecked />
-                          <span className="text-gray-900 dark:text-white">Public reel</span>
+                          <span className="text-gray-900">Public reel</span>
                         </label>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 

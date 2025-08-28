@@ -7,8 +7,8 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = asyncHandler(async (request:NextRequest):Promise<NextResponse> => {
-    const token = await getToken({ req: request });
-    if(!token) return nextError(401, "Unauthorized: Token not found");
+    // const token = await getToken({ req: request });
+    // if(!token) return nextError(401, "Unauthorized: Token not found");
 
     await connectionToDatabase();
 
@@ -20,10 +20,9 @@ export const POST = asyncHandler(async (request:NextRequest):Promise<NextRespons
 
     if(!user.isVerified) return nextError(200, "Plz verify your account first");
 
-    const resetLink = `${process.env.ALLOWED_ORIGIN}/change-pass/${token?._id}`;
+    const resetLink = `${process.env.ALLOWED_ORIGIN}/change-pass/${user?._id}`;
     sendEmailLink(email, resetLink)
         .then(() => console.log("Reset email sent successfully"))
         .catch((err:any) => console.error("Error sending reset email:", err));
-
     return nextResponse(200, "Link send successfully");
 })

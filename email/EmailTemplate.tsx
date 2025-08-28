@@ -137,7 +137,7 @@ export const SEND_EMAIL_LINK = (link:string) => `
           </div>
           <div class="email-body">
               <p>If you did not request this, you can safely ignore this email.</p>
-              <p>Thank you,<br><strong>Meraki Team</strong></p>
+              <p>Thank you,<br><strong>Reels_Pro</strong></p>
           </div>
           <hr>
           <div class="email-footer">

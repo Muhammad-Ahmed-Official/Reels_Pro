@@ -1,4 +1,5 @@
 "use client"
+
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -68,9 +69,6 @@ const LoginPage = () => {
       if(result?.error) return toast.error(result.error);
       if(result?.url) router.push('/');
       },
-      (error: any) => {
-        toast.error("Failed to login", error)
-      }
     )
   }
 
@@ -175,7 +173,7 @@ const LoginPage = () => {
             <div className="mt-4 space-y-2 text-center">
               <Link href="/forgot" className="block text-sm text-indigo-600 hover:text-indigo-700 font-medium">Forgot your password?</Link>
               <div className="cursor-pointer border-t border-gray-200 pt-3">
-                <p className="text-gray-600">Don't an account? <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-bold">Log in</Link></p>
+                <p className="text-gray-600">Don't an account? <Link href="/register" className="text-indigo-600 hover:text-indigo-700 font-bold">Sign Up</Link></p>
               </div>
             </div>
             </div>

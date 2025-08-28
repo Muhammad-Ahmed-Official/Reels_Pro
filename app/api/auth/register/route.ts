@@ -22,7 +22,7 @@ export const POST =  asyncHandler(async (request: NextRequest) => {
             return nextError(400, "User alredy exist with this name");
         } else {
             existingUserByEmail.verifyCode = verifyCode;
-            existingUserByEmail.verifyCodeExpiry = new Date(Date.now() + 3600000);
+            existingUserByEmail.verifyCodeExpiry = new Date(Date.now() + 5*60*1000);
             await existingUserByEmail.save();
         }
     } else {

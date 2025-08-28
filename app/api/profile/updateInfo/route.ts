@@ -17,7 +17,7 @@ export const GET = asyncHandler(async (request:NextRequest): Promise<NextRespons
     await connectionToDatabase();
 
     const userId = new mongoose.Types.ObjectId(token._id);
-    console.log(userId);
+    
     const [postCount, followerCount, followingCount, currentUser] = await Promise.all([
         Video.countDocuments({ user: userId }),
         Follow.countDocuments({ following: userId }),

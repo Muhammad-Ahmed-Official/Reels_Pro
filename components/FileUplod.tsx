@@ -92,7 +92,7 @@ const FileUpload = ({onSuccess, onProgress, fileType="image"}: FileUploadProps) 
                 type="button"
                 onClick={handleTriggerClick}
                 disabled={uploading}
-                className="cursor-pointer inline-flex items-center my-2 p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors text-sm font-medium">
+                className="cursor-pointer inline-flex items-center my-2 p-2 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 text-white text-sm font-medium">
                 {uploading ? (
                 <>
                     <Loader2 className="animate-spin w-4 h-4 mr-2" />

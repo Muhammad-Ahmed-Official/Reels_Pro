@@ -2,7 +2,6 @@
 
 import { apiClient } from "@/lib/api-client"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
-import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import toast from "react-hot-toast"
@@ -13,8 +12,7 @@ import video from "../../../public/vertical-video-thumbnail.png"
 const FloatingReelCard = ({ className, delay = 0 }: any) => (
   <div 
     className={`absolute bg-white rounded-2xl shadow-lg p-4 w-48 ${className}`}
-    style={{ animation: `float 6s ease-in-out infinite`, animationDelay: `${delay}s` }}
-  >
+    style={{ animation: `float 6s ease-in-out infinite`, animationDelay: `${delay}s` }}>
     <div className="relative">
         <Image
             src={video}
@@ -48,21 +46,15 @@ export default function page() {
         }
     })
 
-    const { data: session } = useSession();
-
-    const onSubmit = async () => {
+    const onSubmit = async (data:any) => {
         await asyncHandlerFront(
             async() => {
-                apiClient.forgotPass(session?.user.email as string);
+                await apiClient.forgotPass(data?.email);
                 reset();
                 toast.success("Password reset link successfully");
             }, 
-            (error) => {
-                toast.error(error.message);
-            }
         )
     }
-
 
 
   return (

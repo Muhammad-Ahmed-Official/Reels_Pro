@@ -1,85 +1,9 @@
-// 'use client'
-
-// import { verifySchema } from "@/schemas/verifySchema";
-// import { ApiResponse } from "@/types/ApiResponse";
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import axios, { AxiosError } from "axios";
-// import { Loader2 } from "lucide-react";
-// import { useParams, useRouter } from "next/navigation"
-// import { useState } from "react";
-// import { useForm } from "react-hook-form";
-// import toast from "react-hot-toast";
-// import { z } from "zod";
-
-// export default function verifyAccount() {
-//     const router = useRouter();
-//     const params = useParams<{userName: string}>()
-//     const [isSubmitting, setIsSubmitting] = useState(false);
-
-//     const form = useForm<z.infer<typeof verifySchema>>({
-//         resolver: zodResolver(verifySchema)
-//     })
-
-//     const onSubmit = async (data: z.infer<typeof verifySchema>) => {
-//         try {
-//             setIsSubmitting(true);
-//              const response = await axios.post('/api/verify-code', {
-//                 userName: params.userName,
-//                 code: data.code
-//             })
-//             toast.success(response.data.message);
-//             router.replace('/login');      
-//         } catch (error) {
-//             const axiosError = error as AxiosError<ApiResponse>;
-//             let errorMsg = axiosError.response?.data.message;
-//             toast.error(errorMsg ?? "Something went wrong");
-//         } finally {
-//             setIsSubmitting(false);
-//         }
-//     }
-
-
-//   return (
-//     <div className="flex justify-center items-center min-h-screen bg-gray-100">
-//         <div className='w-full max-w-md p-8 space-y-4 bg-white rounded-lg shadow-md'>
-//             <div className='text-center'>
-//             <h1 className='text-2xl font-extrabold tracking-tight lg:text-4xl mb-2'>Verify Your Account</h1>
-//             <p className=''>
-//                 Verification Code sent to your email
-//             </p>
-//             </div>
-//             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-//                 <fieldset className="fieldset mx-auto">
-                
-//                 <label className="label text-[15px]">Verify Code</label>
-//                 <input type="text" className="input outline-none" placeholder="******" {...form.register("code")} />
-//                 {form.formState.errors.code && ( <p className="text-red-500 text-sm">{form.formState.errors.code.message}</p>)}
-                    
-//                     <button className="btn btn-neutral mt-4 w-xs" type="submit"  disabled={isSubmitting}> 
-//                     {isSubmitting ? ( <Loader2 size={25} className="mr-2 animate-spin text-white" />)  : ('Verify Code') }
-//                 </button>
-//             </fieldset>
-//             </form>
-//         </div>
-//     </div>
-//   )
-// }
-
-
-
-
-
-
-
-
-
 "use client"
+
 import { apiClient } from '@/lib/api-client';
 import { verifySchema } from '@/schemas/verifySchema';
 import { asyncHandlerFront } from '@/utils/FrontAsyncHandler';
 import { zodResolver } from '@hookform/resolvers/zod';
-import axios from 'axios';
-import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form';
@@ -135,26 +59,24 @@ const Input = ({ ...props }) => {
 
 const VerifyOtpPage = () => {
     const router = useRouter();
-    const [otp, setOtp] = useState('');
     const [isSending, setIsSending] = useState<boolean>(false);
-    const params = useParams<{userName:string}>()
-    
-    const { control, register, handleSubmit, formState:{ isSubmitting, errors } } = useForm<z.infer<typeof verifySchema>>({
+    const params = useParams<{email:string}>();
+    const email = decodeURIComponent(params.email);
+    const { control, handleSubmit, reset, formState:{ isSubmitting }, watch } = useForm<z.infer<typeof verifySchema>>({
         resolver: zodResolver(verifySchema),
     })
 
+    const otpValue = watch("code");
+
     const onSubmit = async (data: z.infer<typeof verifySchema>) => {
-        await asyncHandlerFront(
-            async() => {
-            const response = await apiClient.verifyCd(params.userName, data.code)
+      await asyncHandlerFront(
+          async() => {
+            await apiClient.verifyCd(email, data.code)
             toast.success("User register successfully");
-            router.replace('/login');  
-            },
-            (error) => {
-                console.log(error)
-                toast.error(error.message || "Failed")
-            }
-        )
+            router.replace('/login');
+            reset(); 
+          },
+      )
     }
 
 
@@ -162,12 +84,9 @@ const VerifyOtpPage = () => {
         setIsSending(true);
         await asyncHandlerFront(
             async () => {
-                // const res = await apiClient.resendOTP(session?.user.userName as string);
+                await apiClient.resendOTP(email);
                 toast.success("otp resend successfully");
             },
-            (error) => {
-                toast.error(error.message);
-            }
         );
         setIsSending(false);
     }
@@ -232,7 +151,7 @@ const VerifyOtpPage = () => {
                 
                 <h2 className="text-2xl font-bold text-black mb-1">Mobile Phone Verification</h2>
                 <p className="text-gray-300">Enter the 4-digit verification code that was sent to your phone number.</p>
-                <p className='text-gray-300'> Code will expire in 1 hour </p>
+                <p className='text-gray-300'> Code will expire in 5 minutes </p>
               </div>
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
@@ -256,9 +175,21 @@ const VerifyOtpPage = () => {
                     </div>
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="w-full py-2 cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-[16px]">
-                    {isSubmitting ? <div className="flex justify-center gap-3"><Loader2 className="w-6 h-6 animate-spin" />Verifying Account...</div> : "Verify Account"}
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !otpValue || otpValue.length !== 6}
+                  className="w-full py-2 cursor-pointer bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-[16px] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <div className="flex justify-center gap-3">
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                      Verifying Account...
+                    </div>
+                  ) : (
+                    "Verify Account"
+                  )}
                 </button>
+
               </form>
                 <div className="text-sm text-center text-slate-500 mt-4">
                 Didn&apos;t receive code?{" "}

@@ -1,0 +1,37 @@
+MONGODB_URI="mongodb+srv://ahmedanis4546:ahmed123@cluster0.tvtr7.mongodb.net/Reels_Pro"
+NEXTAUTH_SECRET=3822S@SKAK#OEPWOEWP
+
+IMAGEKIT_PRIVATE_KEY="private_Kq1vr+zxjeF9W4J9MJqvBBE5q2g="
+NEXT_PUBLIC_URL_ENDPOINT="https://ik.imagekit.io/vmknmb1na"
+NEXT_PUBLIC_PUBLIC_KEY="public_ze2gCiwV714uyndzS8BTtncPm7U="
+
+GOOGLE_CLIENT_ID=16251777216-7t27okqkljs40613h56he1qt31uburtj.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
+
+PORTAL_EMAIL="ahmedanis4546@gmail.com"
+PORTAL_PASSWORD=lamw ilca snmf upaz
+
+GITHUB_ID=Ov23liaSvLj5B5yDOEfe
+GITHUB_SECRET=99dec7afa0d67a8c1952357940a4a4781c41ed21
+
+ALLOWED_ORIGIN="http://localhost:3000"
+
+REDIS_HOST_URL=redis-15073.crce179.ap-south-1-1.ec2.redns.redis-cloud.com
+REDIS_PORT_NUMBER=15073
+REDIS_PASSWORD=KbPfKbby73xgT98Ae9LosnwtnP7ptb8P
+
+
+
+
+
+
+MONGODB_URI="mongodb+srv://ahmedanis4546:ahmed123@cluster0.tvtr7.mongodb.net/Reels_Pro"
+RABBIT_MQ_Host=localhost
+RABBIT_MQ_Username=admin
+RABBIT_MQ_Password=admin123
+ALLOWED_ORIGIN="http://localhost:4000"
+# PORT="3000"
+
+REDIS_HOST_URL=redis-15073.crce179.ap-south-1-1.ec2.redns.redis-cloud.com
+REDIS_PORT_NUMBER=15073
+REDIS_PASSWORD=KbPfKbby73xgT98Ae9LosnwtnP7ptb8P

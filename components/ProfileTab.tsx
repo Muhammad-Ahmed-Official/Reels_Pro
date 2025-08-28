@@ -2,6 +2,21 @@
 // const isDark = themeMode === "dark";
 // import useTheme from "@/app/context/themeContext"
 
+// const [tempSetting, setTempSetting] = useState({
+//     emailNotifications: true,
+//     isPublic: true,
+//     darkMode: false,
+//     twoFactor: false,
+// })
+// const [savedSettings, setSavedSettings] = useState(tempSetting);
+// const toggleSetting = (key: keyof typeof tempSetting) => {
+// setTempSetting(prev => ({
+//     ...prev,
+//     [key]: !prev[key]
+// }));
+// };
+
+
 import useProfile from "@/app/context/profileContext"
 import { apiClient } from "@/lib/api-client"
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler"
@@ -28,30 +43,14 @@ interface ProfileData {
 }
 
 const ProfileTab = () => {
-
-    const [tempSetting, setTempSetting] = useState({
-        emailNotifications: true,
-        isPublic: true,
-        darkMode: false,
-        twoFactor: false,
-    })
-
-    // const [savedSettings, setSavedSettings] = useState(tempSetting);
-    // const toggleSetting = (key: keyof typeof tempSetting) => {
-    // setTempSetting(prev => ({
-    //     ...prev,
-    //     [key]: !prev[key]
-    // }));
-    // };
-
     const { profileMode, setProfileMode } = useProfile();
     const isPublic = profileMode === "public";
-
-
     const [userInfo, setUserInfo] = useState<ProfileData>({} as ProfileData);
     const [location, setLocation] = useState('');
     const [showAnalytics, setShowAnalytics] = useState<boolean>(false);
     const [updatePassword, setUpdatePassword] = useState<boolean>(false);
+    // const searchParams = useSearchParams();
+    // const id = searchParams.get("id");
 
     useEffect(() => {
         const getInfo = async () => {
@@ -133,14 +132,11 @@ const ProfileTab = () => {
 
     
     
-    // console.log(userInfo, "user:-");
-    
-    return(
+  return(
     <div className="p-6">
       <h2 className="ml-14 text-xl font-bold text-gray-900 sm:mb-6 sm:text-2xl lg:ml-0">Profile</h2>
       
       <div className="mx-auto max-w-7xl">
-      {/* Profile Header Card */}
         <section className="mb-4 sm:mb-6 rounded-2xl border border-white/40 bg-white/50 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl">
             <div className="p-4 sm:p-6 lg:p-8">
                 <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 lg:space-x-6">

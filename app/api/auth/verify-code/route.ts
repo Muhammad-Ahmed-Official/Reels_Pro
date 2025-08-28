@@ -7,9 +7,8 @@ import { NextRequest } from "next/server";
 export const POST =  asyncHandler(async (request: NextRequest) => {
     await connectionToDatabase();
 
-    const { userName, code } = await request.json();
-    const decodedUsername = decodeURIComponent(userName);
-    const user = await User.findOne({ userName: decodedUsername });
+    const { email, code } = await request.json();
+    const user = await User.findOne({ email: email });
     if(!user) return nextError(400, "user not found");
 
     const isCodeValid = user.verifyCode === code;

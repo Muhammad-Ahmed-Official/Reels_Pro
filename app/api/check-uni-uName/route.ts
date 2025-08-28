@@ -6,17 +6,13 @@ import { nextError, nextResponse } from "@/utils/Responses";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
-
 const userNameQuerySchema = z.object({
     userName: userNameValidation,
 })
 
-
 export const GET = asyncHandler(async (request: NextRequest) => {
-    console.log("OK")
     await connectionToDatabase();
     const { searchParams } = new URL(request.url)
-    console.log(searchParams);
     const queryParam = {
         userName: searchParams.get("userName")
     }

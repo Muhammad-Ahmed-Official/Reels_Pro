@@ -69,7 +69,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
               await videoRef.current.play();
               setIsPlaying(true);
 
-              if (!viewed) {
+              if (!viewed && reel?.owner?._id !== user?._id) {
                 try {
                   await apiClient.viewVideo(reel?._id);
                   setViewed(true);
@@ -131,7 +131,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     await asyncHandlerFront(
         async() => {
             await apiClient.likeUnlikeVideo(reel?._id);
-            sendNotification("like", isLiked ? "liked your reel" : "Unliked your reel");
+            // sendNotification("like", isLiked ? "liked your reel" : "Unliked your reel");
         }, 
         (error) => {
           toast.error(error.message || "Something went wrong");
@@ -158,7 +158,7 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
     await asyncHandlerFront(
         async() => {
             await apiClient.follow(reel.owner._id as string);
-            sendNotification("follow", !isFollowing ? "Follow's you" : "Unfollow you")
+            // sendNotification("follow", !isFollowing ? "Follow's you" : "Unfollow you")
         }, 
         (error) => {
           toast.error(error.message)
@@ -251,26 +251,29 @@ const ReelItem = ({ reel, isActive }: { reel: VideoFormData; isActive: boolean }
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
           <div className="flex items-end justify-between">
             <div className="flex-1 mr-4">
-              <button onClick={() => router.push('?tab=profile')} className="flex items-center mb-3 cursor-pointer">
-                <Image
-                  src={reel.owner.profilePic || "/placeholder.svg"}
-                  alt={reel.owner.userName}
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-3"
-                  width={40}
-                  height={40}
-                />
-                <div className="flex items-center">
-                  <span className="text-white font-semibold text-sm sm:text-base">@{reel.owner.userName}</span>
-                  {reel.owner.isVerified && (
-                    <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center ml-1">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                  )}
-                </div>
-                {session?.user?._id !== reel?.owner?._id && <button onClick={handleFollow} className="ml-4 px-3 py-1 cursor-pointer border border-white rounded-full text-white text-xs font-semibold">
-                  {isFollowing ? "Following" : "Follow" }
-                </button>}
-              </button>
+              <div className="flex items-center">
+                <button onClick={() => router.push('?tab=profile')} className="flex items-center mb-1 cursor-pointer">
+                  <Image
+                    src={reel.owner.profilePic || "/placeholder.svg"}
+                    alt={reel.owner.userName}
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-3"
+                    width={40}
+                    height={40}
+                  />
+                  <div className="flex items-center">
+                    <span className="text-white font-semibold text-sm sm:text-base">@{reel.owner.userName}</span>
+                    {reel.owner.isVerified && (
+                      <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center ml-1">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </div>
+                  </button>
+                  {session?.user?._id !== reel?.owner?._id && <button onClick={handleFollow} className="ml-4 px-3 py-1 cursor-pointer border border-white rounded-full text-white text-xs font-semibold">
+                    {isFollowing ? "Following" : "Follow" }
+                  </button>
+                  }
+              </div>
               <p className="text-white text-sm sm:text-base leading-relaxed mb-2">{reel.description}</p>
             </div>
 

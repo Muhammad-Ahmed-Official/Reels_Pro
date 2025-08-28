@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Video, Bell, MessageCircle, Plus, User, Menu, X, LogOut, ListVideo } from "lucide-react"
-import HomeTab from "@/components/HomeTab"
+// import HomeTab from "@/components/HomeTab"
 import VideosTab from "@/components/VideoTab"
 import NotificationsTab from "@/components/NotificationsTab"
 import MessagesTab from "@/components/MessagesTab"
@@ -67,7 +67,7 @@ export default function ProfilePage() {
             case "profile":
                 return <ProfileTab />
             default:
-                return <HomeTab />
+                // return <HomeTab />
         }
     }
 
@@ -118,6 +118,8 @@ export default function ProfilePage() {
                             signOut({ callbackUrl: "/login" });
                         } else if (tab.id === "watchLater") {
                             setCollectionModalOpen(!collectionModalOpen);
+                        } else if (tab.id === "profile"){
+                            router.push(`?tab=${tab.id}&id=${user?._id}`, { scroll: false });
                         } else {
                             setActiveTab(tab.id);
                             if (tab?.id !== "reels") {

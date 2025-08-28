@@ -7,15 +7,10 @@ import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = asyncHandler(async (request:NextRequest):Promise<NextResponse> => {
-    
-    const token = await getToken({ req: request });
-    if(!token) return nextError(400, "Unauthorized: Token not found");
-    
     await connectionToDatabase();
 
     const { email } = await request.json();
     if(!email) return nextError(400, "Missing Email field");
-
     const user = await User.findOne({email});
     if(!user) return nextError(404, "User nor found");
 
@@ -26,7 +21,7 @@ export const POST = asyncHandler(async (request:NextRequest):Promise<NextRespons
 
     const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
     const expiryDate = new Date();
-    expiryDate.setHours(expiryDate.getHours() + 1);
+    expiryDate.setHours(expiryDate.getMinutes() + 5);
 
     user.verifyCode = verifyCode;
     user.verifyCodeExpiry = expiryDate;

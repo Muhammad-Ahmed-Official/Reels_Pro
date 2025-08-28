@@ -1,10 +1,10 @@
+import { INotification } from "@/microservice/server/Models/Notification.model";
+import { IChat } from "@/models/Chat.model";
 import { Comment } from "@/models/Comment";
 import { Like } from "@/models/Like";
 import { Playlist } from "@/models/Playlist";
 import { User } from "@/models/User";
 import { IVideo } from "@/models/Video";
-import { IChat } from "@/server/Models/Chat.model";
-import { INotification } from "@/server/Models/Notification.model";
 
 export type VideosFormData = Omit<IVideo, "_id" | "user" | "views">;
 
@@ -116,10 +116,10 @@ class ApiClient{
     }
 
 
-    async verifyCd(userName: string, code: string){
-        return this.fetch("verify-code", {
+    async verifyCd(email: string, code: string){
+        return this.fetch("auth/verify-code", {
             method: "POST",
-            body: {userName, code}
+            body: {email, code}
         })
     }
 
@@ -133,14 +133,14 @@ class ApiClient{
 
 
     async resendOTP(email: string){
-        return this.fetch("auth/resentOTP", {
+        return this.fetch("auth/resendOtp", {
             method: "POST",
             body: { email },
         })
     };
 
     async getUser(){
-        const response = await this.fetch<{data: User}>("profile/updateInfo");
+        const response = await this.fetch<{data: User}>(`profile/updateInfo`);
         return response.data;
     }
 
@@ -168,7 +168,7 @@ class ApiClient{
 
 
 
-    async updatePass(data:string){
+    async updatePass(data:any){
         return this.fetch("profile/updatePass", {
             method: "PUT",
             body: data,

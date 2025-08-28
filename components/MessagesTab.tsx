@@ -1,15 +1,15 @@
-import { ArrowLeft, Check, CheckCheck, ChevronDown, LucideUser, MessageCircleX, MessageSquare, Send, Trash2, UserRoundPen, X} from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, ChevronDown, MessageCircleX, MessageSquare, Send, Trash2, UserRoundPen, X} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import FileUpload from "./FileUplod";
 import { asyncHandlerFront } from "@/utils/FrontAsyncHandler";
 import toast from "react-hot-toast";
 import { apiClient } from "@/lib/api-client";
-import { IChat } from "@/server/Models/Chat.model";
 import { useDebounceCallback } from "usehooks-ts";
 import Image from "next/image";
 import { useSocket } from "@/app/context/SocketContext";
 import { useUser } from "@/app/context/userContext";
+import { IChat } from "@/models/Chat.model";
 
 function SidebarSkelton() {
   const skeletonContacts = Array(8).fill(null);

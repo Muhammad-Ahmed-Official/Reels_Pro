@@ -93,12 +93,9 @@ export default function RegisterPage() {
             async() => {
                 await apiClient.register(data);
                 toast.success('Otp send to email');
-                router.push(`/verify/${userName}`);
+                router.push(`/verify/${data?.email}`);
                 reset()
             }, 
-            (error) => {
-                toast.error(error.message)
-            }
         )
     };
 
@@ -163,12 +160,15 @@ export default function RegisterPage() {
                 <p className="text-gray-300">Join millions of creators worldwide</p>
               </div>
 
-            <div className="flex justify-center mb-4">
+            <div className="flex flex-col items-center mx-auto mb-2">
               <div className="relative">
                 <FileUpload fileType="image" onSuccess={(res) => setValue('profilePic', res.url)} />
                 {watch('profilePic') && (
                   <img src={watch('profilePic')} alt="Preview" className="absolute inset-0 w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg" />
                 )}
+              </div>
+              <div className=''>
+                {errors.profilePic && ( <p className="mt-1 text-sm text-red-600">{errors?.profilePic && "Upload image | Invalid URL" }</p>)}
               </div>
             </div>
 
@@ -178,7 +178,7 @@ export default function RegisterPage() {
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="@your_username"
+                      placeholder="your_username"
                       className="w-full px-4 py-2 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 bg-white shadow-sm hover:shadow-md text-[16px]"
                       {...register('userName', { onChange: (e) => debounced(e.target.value) })}
                     />
@@ -217,7 +217,7 @@ export default function RegisterPage() {
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Create password"
+                      placeholder="••••••••"
                       className="w-full px-4 py-2 rounded-2xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all duration-200 bg-white shadow-sm hover:shadow-md text-[16px]"
                       {...register('password')}
                     />
@@ -225,8 +225,7 @@ export default function RegisterPage() {
                     <button 
                       type="button" 
                       onClick={() => setShowPassword(!showPassword)} 
-                      className="curaor-pointer absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 focus:outline-none"
-                    >
+                      className="curaor-pointer absolute right-3 top-5 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 focus:outline-none">
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
@@ -241,7 +240,7 @@ export default function RegisterPage() {
             <div className="mt-4 space-y-2 text-center">
               
               <div className="border-t border-gray-200 pt-3">
-                <p className="text-gray-600">Already have an account? <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-bold">Sign in</Link></p>
+                <p className="text-gray-600">Already have an account? <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-bold">Login</Link></p>
               </div>
             </div>
             </div>

@@ -1,9 +1,9 @@
 'use client'
 
+import { useUser } from '@/app/context/userContext';
 import { apiClient } from '@/lib/api-client';
 import { asyncHandlerFront } from '@/utils/FrontAsyncHandler';
 import { Eye, EyeOff } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -18,17 +18,16 @@ interface PasswordFormData {
 
 export default function page() {
     const [showPassword, setShowPassword] = useState(false);
-    const { data: session } = useSession();
-    const params = useParams<{tokenId:string}>()
+    const { user } = useUser();
+    const params = useParams<{id:string}>()
     const router = useRouter();
-    // console.log(params.tokenId);
     
-    // useEffect(() => {
-        // if(session?.user._id !== params.tokenId) {
-        //     router.replace("/signin");
-        //     toast.error("You are Unauthorized, Plz Signin first");
-        // }
-    // }, [])
+    useEffect(() => {
+        if(user?._id !== params.id) {
+            router.replace("/signin");
+            toast.error("You are Unauthorized, Plz Signin first");
+        }
+    }, [])
 
     const { register, reset, handleSubmit, formState:{isSubmitting, errors} } = useForm<PasswordFormData>({
         defaultValues: {
@@ -40,7 +39,9 @@ export default function page() {
     const onSubmit = async (data: PasswordFormData) => {
         await asyncHandlerFront(
             async() => {
-                await apiClient.updatePass(data.oldPassword, data.newPassword);
+                const payload = {oldPassword: data?.oldPassword, newPassword: data.newPassword}
+                await apiClient.updatePass(payload);
+                reset();
                 toast.success("Password updated successfully");
             }, 
             (error) => {
